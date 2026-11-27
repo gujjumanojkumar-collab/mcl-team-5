@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MM machine and spares monitor</title>
+<meta name="description" content="Materials Management dashboard: is each machine profitable, is a big spare worth buying, and what do late supplies cost in lost production. All figures are made up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html"><i aria-hidden="true"></i>MM spares monitor</a>
+  <nav class="menu" aria-label="Main menu">
+    <a href="#summary">Summary</a><a href="#machines">Machines</a><a href="#spare">Spare: worth it?</a><a href="#supply">Late supplies</a>
+  </nav>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Materials Management · made-up figures · as of <span id="asOf">today</span></div>
+  <h1 id="headline">Working it out…</h1>
+  <p class="lede" id="lede"></p>
+  <div class="kpis">
+    <div class="kpi"><div class="l">Fleet profit per month</div><div class="v" id="kProfit">–</div></div>
+    <div class="kpi"><div class="l">Machines losing money</div><div class="v" id="kLosing">–</div></div>
+    <div class="kpi"><div class="l">Lost to late supplies (with domino)</div><div class="v bad" id="kLost">–</div></div>
+    <div class="kpi"><div class="l">Purchase orders late now</div><div class="v warn" id="kLate">–</div></div>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <div id="err" role="alert"></div>
+
+  <!-- 1. SUMMARY -->
+  <section id="summary">
+    <h2>Summary</h2>
+    <p class="intro">Which machines earn more than they cost, and what the manager should do next.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Profit per month, by machine type</h3>
+        <p class="muted" style="font-size:14px">Value of work done, minus running cost and fixed cost. Red bars lose money.</p>
+        <div class="chart-box"><canvas id="profitChart" aria-label="Profit per month by machine type"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>What to do next</h3>
+        <ul class="actions" id="actions"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. MACHINES -->
+  <section id="machines">
+    <h2>Is it profitable to run the machine?</h2>
+    <p class="intro">Change any box. The verdict updates at once. <b>Availability</b> = share of the month the machine is fit to work. <b>Utilisation</b> = share of that fit time it actually works.</p>
+    <div class="grid2" id="machineCards"></div>
+  </section>
+
+  <!-- 3. SPARE: WORTH IT? -->
+  <section id="spare">
+    <h2>Is a big spare worth buying?</h2>
+    <p class="intro">Example: an undercarriage assembly for a shovel at Rs 2 crore. Does the production it makes possible over its life pay for it? And is a cheaper option really cheaper per working hour?</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>The spare</h3>
+        <div class="fields" id="spareFields">
+          <label class="f wide">For which machine<select data-s="machine" id="spareMachine"></select></label>
+          <label class="f wide">Spare name<input data-s="item" type="text"></label>
+        </div>
+        <h3 style="margin-top:16px">Option A</h3>
+        <div class="fields three">
+          <label class="f">Price (Rs)<input data-s="aPrice" type="number" min="0" inputmode="numeric"></label>
+          <label class="f">Life (working hours)<input data-s="aLife" type="number" min="1" inputmode="numeric"></label>
+          <label class="f">Fitting time (hours)<input data-s="aFit" type="number" min="0" inputmode="numeric"></label>
+          <label class="f">Lead time (days)<input data-s="aLead" type="number" min="0" inputmode="numeric"></label>
+          <label class="f wide">Name<input data-s="aName" type="text"></label>
+        </div>
+        <h3 style="margin-top:16px">Option B (cheaper / rebuilt / other make)</h3>
+        <div class="fields three">
+          <label class="f">Price (Rs)<input data-s="bPrice" type="number" min="0" inputmode="numeric"></label>
+          <label class="f">Life (working hours)<input data-s="bLife" type="number" min="1" inputmode="numeric"></label>
+          <label class="f">Fitting time (hours)<input data-s="bFit" type="number" min="0" inputmode="numeric"></label>
+          <label class="f">Lead time (days)<input data-s="bLead" type="number" min="0" inputmode="numeric"></label>
+          <label class="f wide">Name<input data-s="bName" type="text"></label>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="big-verdict" id="spareVerdictBox"><h3 id="spareVerdict">–</h3><p id="spareWhy" class="muted"></p></div>
+          <div class="results" id="spareResults" style="border-top:0;margin-top:0;padding-top:0"></div>
+        </div>
+        <div class="panel">
+          <h3>Money earned after paying for Option A</h3>
+          <p class="muted" style="font-size:14px">Machine earnings (after running cost) minus the spare's price, over the spare's life. Where the line crosses zero, the spare has paid for itself.</p>
+          <div class="chart-box"><canvas id="spareChart" aria-label="Cumulative earnings after spare cost"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Option A or Option B?</h3>
+          <table class="compare" id="compare"></table>
+          <p class="say muted" id="compareSay"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. LATE SUPPLIES AND THE DOMINO EFFECT -->
+  <section id="supply">
+    <h2>Late supplies and the domino effect</h2>
+    <p class="intro">When a spare arrives after the date it was needed, the machine stands idle. Machines that depend on it stop next: no drilling means no blasted rock for the shovel after a few days, and no shovel means the dumpers have nothing to carry.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Where the days go in each purchase</h3>
+        <div class="legend"><span><i style="background:var(--c1)"></i>Indent to purchase order</span><span><i style="background:var(--c2)"></i>Purchase order to delivery</span></div>
+        <div class="chart-box tall"><canvas id="cycleChart" aria-label="Days in each procurement stage per purchase order"></canvas></div>
+        <p class="muted" style="font-size:14px" id="cycleSay"></p>
+      </div>
+      <div class="panel">
+        <h3>How one machine stops the next</h3>
+        <p class="muted" style="font-size:14px">Change the links if your mine works differently.</p>
+        <div id="links" class="stack"></div>
+      </div>
+    </div>
+
+    <div class="btns no-print" style="margin:18px 0 10px">
+      <button class="btn primary" id="addPO" type="button">+ Add a purchase order</button>
+      <label class="f" style="flex-direction:row;align-items:center;gap:8px">Show
+        <select id="poFilter" style="width:auto">
+          <option value="all">All orders</option><option value="late">Only those that stopped a machine</option><option value="open">Only not yet received</option>
+        </select>
+      </label>
+    </div>
+
+    <form class="panel no-print" id="poForm" hidden>
+      <h3 id="poFormTitle">Add a purchase order</h3>
+      <div class="fields three">
+        <label class="f wide">Spare / item<input name="item" type="text" required></label>
+        <label class="f">For machine<select name="machine" id="poMachine"></select></label>
+        <label class="f">Location<input name="location" type="text" required></label>
+        <label class="f">Supplier<input name="supplier" type="text"></label>
+        <label class="f">Value (Rs)<input name="value" type="number" min="0" inputmode="numeric"></label>
+        <label class="f">Urgency<select name="urgency"><option>Low</option><option>Medium</option><option>High</option></select></label>
+        <label class="f">Status<select name="status"><option>Open</option><option>In progress</option><option>Resolved</option></select></label>
+        <label class="f">Indent date<input name="indent" type="date" required></label>
+        <label class="f">Purchase order date<input name="po" type="date"></label>
+        <label class="f">Promised delivery<input name="promised" type="date"></label>
+        <label class="f">Needed by (machine stops after)<input name="required" type="date"></label>
+        <label class="f">Actually delivered (blank = not yet)<input name="actual" type="date"></label>
+        <label class="f">Machines stopped waiting<input name="stopped" type="number" min="0" inputmode="numeric" value="1"></label>
+      </div>
+      <div class="btns" style="margin-top:14px"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" id="poCancel">Cancel</button></div>
+    </form>
+
+    <div class="stack" id="poList"></div>
+  </section>
+
+  <section id="notes">
+    <h2>How it is worked out</h2>
+    <div class="panel notes">
+      <ul>
+        <li><b>Working hours a month</b> = 720 hours × availability × utilisation.</li>
+        <li><b>Earning per working hour</b> = output per hour × value of one unit of work, minus running cost per hour (fuel or power, wear parts, operator incentive).</li>
+        <li><b>Profit per month</b> = working hours × earning per working hour, minus fixed cost (depreciation, crew, interest). Fixed cost is paid even when the machine stands.</li>
+        <li><b>Spare pays back</b> when working hours × earning per working hour = spare price. <b>Cost per working hour</b> of a spare = (price + earnings lost while fitting) ÷ life in hours.</li>
+        <li><b>Idle days</b> = delivery date (or today, if not delivered) minus the date the spare was needed, if machines were stopped waiting.</li>
+        <li><b>Domino</b>: a machine down for D days stops the next machine for D minus its buffer days (work in hand). Lost money = idle days × working hours a day × earning per working hour, for every machine stopped.</li>
+        <li>"Value of one unit of work" is the part of the mine's earning you credit to that machine. All figures here are <b>made up</b> for the MDP exercise.</li>
+      </ul>
+      <div class="btns no-print"><button class="btn" type="button" onclick="window.print()">Print or save as PDF</button><button class="btn danger" type="button" id="reset">Reset to sample figures</button></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>MCL team 5 · IIM Sambalpur MDP · all figures made up</span><span id="saved">Changes are kept in this browser.</span></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="mm.js"></script>
+</body>
+</html>
