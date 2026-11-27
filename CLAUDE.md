@@ -89,3 +89,7 @@
   placeholder and has no link to the dashboard; the numbers are made up and
   the tipper load, shovel count and Rs 150 per BCM cost are guesses. Next:
   replace shifts.json with real shift reports, or connect it to the database.
+- Dashboard redesign (Claude): dashboard.html restyled (dark header, stage
+  cards, tap-a-day timeline, section menu, phone-friendly shift log). Charts
+  now use Chart.js from jsDelivr. Same made-up data and same calculations.
+  Next: real shift data, and blame for drilling delays caused by uncleared rock.
