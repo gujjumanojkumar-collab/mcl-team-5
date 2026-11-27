@@ -146,3 +146,10 @@
   scripts/mcl_deck.py builds the slides (title, section, bullets, two columns,
   key figures, table, chart, closing). Tested with a sample deck. Not part of
   the website. Next: ask Claude in this repo to "make a PPT on ..." to use it.
+- MCL PPT plugin (Claude): the PPT skill is now also a Claude Code plugin.
+  It moved to plugins/mcl-ppt/ (.claude/skills/mcl-ppt is a shortcut to it, so
+  it still works in this project). .claude-plugin/marketplace.json lists it, so
+  others can install it with "/plugin marketplace add
+  gujjumanojkumar-collab/mcl-team-5" then "/plugin install mcl-ppt@mcl-team-5".
+  Install steps in plugins/mcl-ppt/README.md. Both files pass "claude plugin
+  validate". Next: once this branch is merged into main, try installing it.

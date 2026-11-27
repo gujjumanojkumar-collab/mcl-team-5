@@ -22,12 +22,14 @@ presentation.
    - Font: Calibri.
 
 ## How to build the deck
-Use the helper `scripts/mcl_deck.py` (needs `python-pptx`). It applies all
+Use the helper `scripts/mcl_deck.py` in this skill's folder (needs `python-pptx`;
+if missing, run `pip install python-pptx`). It applies all
 three rules automatically, so never add slides any other way.
 
 ```python
 import sys
-sys.path.insert(0, ".claude/skills/mcl-ppt/scripts")
+# The folder this SKILL.md is in (shown as the skill's base directory when it loads)
+sys.path.insert(0, "<skill folder>/scripts")
 from mcl_deck import MCLDeck
 
 deck = MCLDeck()

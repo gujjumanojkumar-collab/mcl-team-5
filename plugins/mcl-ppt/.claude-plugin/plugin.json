@@ -1,0 +1,7 @@
+{
+  "name": "mcl-ppt",
+  "version": "1.0.0",
+  "description": "MCL-branded PowerPoint decks: MCL logo top right on every slide, footer 'Mahanadi Coalfields Ltd', blue, black and white theme.",
+  "author": { "name": "MCL team 5" },
+  "keywords": ["mcl", "powerpoint", "pptx", "presentation", "slides"]
+}
