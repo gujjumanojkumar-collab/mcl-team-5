@@ -140,3 +140,9 @@
   how it is built, value for MCL, limits and next steps, and a 5-minute demo
   script. It prints to PDF as a handout. Next: practise the demo; run the
   database setup and fill in config.js before the presentation if possible.
+- MCL PPT skill (Claude): .claude/skills/mcl-ppt/ is a Claude skill for making
+  PowerPoint decks. Every slide gets the MCL logo top right (assets/mcl-logo.jpg),
+  the footer "Mahanadi Coalfields Ltd" and a blue, black and white theme.
+  scripts/mcl_deck.py builds the slides (title, section, bullets, two columns,
+  key figures, table, chart, closing). Tested with a sample deck. Not part of
+  the website. Next: ask Claude in this repo to "make a PPT on ..." to use it.
