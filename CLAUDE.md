@@ -140,16 +140,6 @@
   how it is built, value for MCL, limits and next steps, and a 5-minute demo
   script. It prints to PDF as a handout. Next: practise the demo; run the
   database setup and fill in config.js before the presentation if possible.
-- MCL PPT skill (Claude): .claude/skills/mcl-ppt/ is a Claude skill for making
-  PowerPoint decks. Every slide gets the MCL logo top right (assets/mcl-logo.jpg),
-  the footer "Mahanadi Coalfields Ltd" and a blue, black and white theme.
-  scripts/mcl_deck.py builds the slides (title, section, bullets, two columns,
-  key figures, table, chart, closing). Tested with a sample deck. Not part of
-  the website. Next: ask Claude in this repo to "make a PPT on ..." to use it.
-- MCL PPT plugin (Claude): the PPT skill is now also a Claude Code plugin.
-  It moved to plugins/mcl-ppt/ (.claude/skills/mcl-ppt is a shortcut to it, so
-  it still works in this project). .claude-plugin/marketplace.json lists it, so
-  others can install it with "/plugin marketplace add
-  gujjumanojkumar-collab/mcl-team-5" then "/plugin install mcl-ppt@mcl-team-5".
-  Install steps in plugins/mcl-ppt/README.md. Both files pass "claude plugin
-  validate". Next: once this branch is merged into main, try installing it.
+- MCL PPT plugin (Claude): a PowerPoint plugin (MCL logo, footer, blue /
+  black / white theme) was made and then, at the team's request, removed from
+  this repository. It is kept only on the user's own computer, not on GitHub.
