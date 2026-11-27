@@ -83,7 +83,8 @@
   explosive_used_kg, blast_delay_min, blast_reason, shovels_working,
   tippers_working, round_trip_min, bcm_moved, load_delay_min, load_reason,
   urgency, status, note. One row per date and shift.
-- Pages: index.html = entry page; dashboard.html = dashboard
+- Pages: index.html = entry page; dashboard.html = dashboard;
+  summary.html = project summary for the MDP presentation
 
 ## Progress Log (newest entry at the bottom)
 - Phase 0 (starter): placeholder index.html, config.js without settings and
@@ -133,3 +134,9 @@
   as stage drawings tinted with each stage colour (dashboard stage cards and
   the shift form); favicon.svg as the browser-tab icon. The scene is left out
   when printing.
+- Project summary (Claude): summary.html is the third page, linked from the
+  menu on every page. It covers the problem, what the tool does, how it
+  decides who is at fault, live results (same calculation as the dashboard),
+  how it is built, value for MCL, limits and next steps, and a 5-minute demo
+  script. It prints to PDF as a handout. Next: practise the demo; run the
+  database setup and fill in config.js before the presentation if possible.

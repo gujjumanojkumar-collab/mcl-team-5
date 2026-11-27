@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mine delay monitor project summary</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html"><i aria-hidden="true"></i>MCL team tool</a>
+  <nav class="menu" aria-label="Main menu"><a href="index.html">Inputs</a><a href="dashboard.html">Dashboard</a><a href="summary.html" aria-current="page">Summary</a></nav>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Project summary · MCL team 5 · IIM Sambalpur MDP</div>
+  <h1>Mine production delay monitor</h1>
+  <p class="lede">A web tool that shows which contractor caused a production delay in an open-cast mine, where the delay started, and what it cost.</p>
+  <div class="chips"><span class="chip">3 pages: Inputs, Dashboard, Summary</span><span class="chip">Works on phone and computer</span><span class="chip sample">Made-up data for practice</span></div>
+  <div class="btns no-print"><a class="btn primary" href="dashboard.html">Open the dashboard →</a><a class="btn" href="index.html">Enter shift data</a><button type="button" class="btn" id="printBtn">Print or save as PDF</button></div>
+</div>
+<img class="hero-scene" src="images/mine-scene.svg" alt="" width="2000" height="240">
+</div>
+
+<nav class="secnav no-print" aria-label="Sections"><div class="wrap">
+  <a href="#problem">Problem</a><a href="#tool">What it does</a><a href="#logic">Who is at fault</a><a href="#results">Results</a><a href="#build">How it is built</a><a href="#value">Value</a><a href="#next">Next steps</a><a href="#demo">Demo</a>
+</div></nav>
+
+<main class="wrap">
+  <div id="err" role="alert"></div>
+
+  <section id="problem" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">1</span>The problem</h2>
+    <p class="sum-lead">In an open-cast mine, three contractors work one after another. A hold-up at one stage soon stops the stages after it, so the whole line loses output and money.</p>
+    <div class="flow" role="img" aria-label="The production line: drilling, then blasting, then loading and hauling, with drilled holes and blasted rock held in stock between them">
+      <div class="flow-stage"><i class="ico ico-drill" style="color:var(--s0)"></i><b>Drilling</b><span>Contractor A</span></div>
+      <div class="flow-gap"><span>drilled holes in stock</span></div>
+      <div class="flow-stage"><i class="ico ico-blast" style="color:var(--s1)"></i><b>Blasting</b><span>Contractor B</span></div>
+      <div class="flow-gap"><span>blasted rock in stock</span></div>
+      <div class="flow-stage"><i class="ico ico-load" style="color:var(--s2)"></i><b>Loading and hauling</b><span>Contractor C</span></div>
+    </div>
+    <ul class="sum-list">
+      <li>The stage that looks short is often not the one at fault. Loading may stand idle because drilling failed two days earlier.</li>
+      <li>Finding the real cause means reading many shift reports by hand.</li>
+      <li>Contractors dispute the blame, and the loss is hard to put in rupees.</li>
+    </ul>
+  </section>
+
+  <section id="tool" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">2</span>What the tool does</h2>
+    <div class="feat">
+      <div class="panel"><h3>Records every shift</h3><p>Holes drilled, explosive used, machines working, rock moved, time lost and the reason, with location, urgency and status.</p></div>
+      <div class="panel"><h3>Separates the blame</h3><p>For each contractor it splits the shortfall into its own loss and loss from being starved by the stage before.</p></div>
+      <div class="panel"><h3>Names the defaulter</h3><p>It shows the primary defaulter, the main cause, and the cost in rupees, on one screen.</p></div>
+      <div class="panel"><h3>Shows where and when</h3><p>A day-by-day grid shows where each delay started. Stock charts show how it spread down the line.</p></div>
+    </div>
+  </section>
+
+  <section id="logic" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">3</span>How it decides who is at fault</h2>
+    <ol class="steps">
+      <li><span><b>Set the plan.</b> From the mine settings: <span id="pShift">10,000</span> BCM, <span id="pHoles">400</span> holes per shift, and one blast a day at <span id="pBlast">15:00</span>. (BCM = cubic metres of rock measured in the ground.)</span></li>
+      <li><span><b>Compare each stage with its plan,</b> shift by shift.</span></li>
+      <li><span><b>Check the stock between stages.</b> If the stage before ran out of holes or rock, the loss is "starved" and is not the contractor's fault.</span></li>
+      <li><span><b>Follow the real cause.</b> If drilling stopped because blasted rock was not cleared, the loss goes to loading and hauling.</span></li>
+      <li><span><b>Add up each contractor's own loss.</b> The largest is the primary defaulter. Any other stage losing 2% of plan or more is contributing.</span></li>
+      <li><span><b>Put a price on it.</b> Each BCM not delivered costs ₹<span id="pRate">150</span>, a rate the team can change.</span></li>
+    </ol>
+  </section>
+
+  <section id="results" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">4</span>Results from the current data</h2>
+    <div class="panel">
+      <p class="sub" id="resSource" style="margin:0">Working out the results…</p>
+      <h3 class="res-verdict" id="resVerdict"></h3>
+      <p id="resTake" style="margin:0 0 16px;max-width:75ch"></p>
+      <div class="kpis" id="resTiles"><div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div></div>
+      <h3 class="box-title" style="margin-top:20px">Own loss by contractor</h3>
+      <div id="resStages"></div>
+      <p class="no-print" style="margin:14px 0 0"><a class="btn" href="dashboard.html">See the full dashboard →</a></p>
+    </div>
+  </section>
+
+  <section id="build" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">5</span>How it is built</h2>
+    <div class="sum-grid2">
+      <ul class="sum-list">
+        <li><b>Three web pages</b> written in plain HTML, CSS and JavaScript, the basic languages of web pages. Nothing to install.</li>
+        <li><b>Published by Vercel,</b> a free website host, straight from GitHub, where the code is stored.</li>
+        <li><b>Saves to Supabase,</b> an online database, in one table of shift reports. Until it is switched on, each browser keeps its own reports.</li>
+        <li><b>Charts by Chart.js,</b> a free charting library.</li>
+        <li><b>Imports and exports CSV</b> spreadsheet files, ready for scheduled SAP exports.</li>
+        <li><b>About 2,100 lines</b> of code and drawings, written with Claude, an AI assistant, in the steps on the right.</li>
+      </ul>
+      <ol class="timeline">
+        <li><b>Starter</b>Course template and team rules</li>
+        <li><b>First dashboard</b>Defaulter logic on made-up shift data</li>
+        <li><b>Redesign</b>Cleaner layout and Chart.js charts</li>
+        <li><b>Inputs page</b>Settings, shift form, one blast a day</li>
+        <li><b>Database</b>Shared Supabase table, no delete</li>
+        <li><b>Presentable</b>Verdict, dial, stock tanks, PDF</li>
+        <li><b>Mine drawings</b>Pit scene and stage drawings</li>
+        <li><b>Summary</b>This page for the MDP</li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="value" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">6</span>Value for MCL</h2>
+    <ul class="ticks">
+      <li><b>Fair blame</b>A contractor is charged only for its own losses, not for being starved by another.</li>
+      <li><b>Faster answers</b>Defaulter, cause and cost on one screen, instead of reading reports by hand.</li>
+      <li><b>Early warning</b>Stock between stages shows when the next stage is about to stop.</li>
+      <li><b>Loss in rupees</b>Every BCM not delivered is priced, ready for contract discussions.</li>
+      <li><b>Ready for SAP</b>The CSV layout can take scheduled exports from SAP.</li>
+      <li><b>Works anywhere</b>On a phone at the face, or on a computer in the office.</li>
+    </ul>
+  </section>
+
+  <section id="next" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">7</span>Limits and next steps</h2>
+    <div class="sum-grid2">
+      <div class="panel">
+        <h3 class="box-title">Limits today</h3>
+        <ul class="sum-list" id="limits">
+          <li>All figures are made up for practice. There is no real MCL data.</li>
+          <li>Mine settings are kept in each browser, because the tool uses one table only.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3 class="box-title">Next steps</h3>
+        <ol class="sum-list">
+          <li>Run the database setup and fill in config.js, so the team shares one set of reports.</li>
+          <li>Decide who is responsible for each delay reason: the contractor, MCL or the weather.</li>
+          <li>Add a login before any real data goes in, with approval from IT.</li>
+          <li>Ask IT for scheduled SAP exports that the tool can import.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" class="sum-section">
+    <h2 class="sum-h"><span class="sum-no">8</span>How to demo it in five minutes</h2>
+    <ol class="steps">
+      <li><span><b>Open the Dashboard.</b> Read the verdict at the top and the dial showing how much of the plan was delivered.</span></li>
+      <li><span><b>Walk the production line.</b> Point to the three stage cards and the stock tanks between them.</span></li>
+      <li><span><b>Tap a box with a border</b> in the day-by-day grid. It shows where a delay started and what it cost.</span></li>
+      <li><span><b>Show a "starved" day.</b> Loading looked short, but the stage before it was at fault.</span></li>
+      <li><span><b>Add a shift on the Inputs page</b> with a shovel breakdown, then open the Dashboard again.</span></li>
+      <li><span><b>Press Print or save as PDF</b> to hand out the report.</span></li>
+    </ol>
+  </section>
+</main>
+<footer><div class="wrap"><span>MCL team tool · IIM Sambalpur MDP · made-up data only</span><span id="updated"></span></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="mine.js"></script>
+<script>
+var $ = function (id) { return document.getElementById(id); };
+function el(tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+function css(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+var N = Mine.N, STAGES = Mine.STAGES;
+var INR = function (v) { return v >= 1e7 ? '₹' + (v / 1e7).toFixed(2) + ' Cr' : v >= 1e5 ? '₹' + (v / 1e5).toFixed(1) + ' L' : '₹' + N(v); };
+var STATUS_CLS = { 'Primary defaulter': 'bad', 'Contributing': 'warn', 'Starved by upstream': 'warn', 'On plan': 'ok' };
+var S = Mine.loadSettings();
+
+function showError(msg) {
+  var b = $('err'); b.style.display = 'block';
+  b.replaceChildren(el('strong', null, 'Sorry, part of this page could not load. '), document.createTextNode('Please send this message to the team: '), el('code', null, msg));
+}
+
+// Plan figures in the text follow the mine settings.
+function renderPlan() {
+  $('pShift').textContent = N(S.target_bcm_day / S.shifts_per_day);
+  $('pHoles').textContent = N(S.holes_plan_day / S.shifts_per_day);
+  $('pBlast').textContent = S.blast_time;
+  $('pRate').textContent = N(S.cost_per_bcm);
+  var issues = Mine.checks(S).filter(function (c) { return c.level !== 'ok'; });
+  issues.forEach(function (c) { el('li', null, 'Plan check: ' + c.text, $('limits')); });
+}
+
+// Results are worked out with the same calculation as the dashboard.
+async function renderResults() {
+  var entries = await Mine.Store.list(), sample = !entries.length;
+  if (sample) entries = Mine.sample(S);
+  var m = Mine.compute(S, entries);
+  var where = Mine.Store.mode === 'database' ? 'the team database' : 'this browser';
+  if (!m.days.length) { $('resSource').textContent = 'No shift reports with a date yet. Add some on the Inputs page.'; $('resTiles').replaceChildren(); return; }
+  var last = m.days[m.days.length - 1].date;
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], lp = last.split('-'), lastTxt = +lp[2] + ' ' + MON[+lp[1] - 1] + ' ' + lp[0];
+  $('resSource').textContent = sample ? 'Worked out from 30 days of made-up sample reports, up to ' + lastTxt + '.'
+    : 'Worked out from ' + entries.length + ' shift report' + (entries.length === 1 ? '' : 's') + ' in ' + where + ', covering ' + m.days.length + ' day' + (m.days.length === 1 ? '' : 's') + ' up to ' + lastTxt + '.';
+  var ranked = m.stages.slice().sort(function (a, b) { return b.own - a.own; }), def = ranked[0];
+  var v = $('resVerdict'), t = $('resTake'); v.replaceChildren(); t.replaceChildren();
+  if (def.status === 'Primary defaulter') {
+    v.append(el('span', 'hl', def.stage), ' is the primary defaulter');
+    t.append(def.contractor + ' lost ', el('b', null, N(def.own) + ' BCM'), ' of output for its own reasons (' + INR(def.own * S.cost_per_bcm) + ')' + (def.top === 'Not recorded' ? ', but the reasons were not recorded.' : ', mostly from ' + def.top.toLowerCase() + '.'));
+  } else { v.textContent = 'No contractor is at fault'; t.textContent = 'Every stage stayed within 2% of its plan for its own reasons.'; }
+  var pct = m.actual / m.planTotal * 100, delayDays = m.days.filter(function (r) { return r.stage !== 'On plan'; }).length;
+  var tiles = [['Plan delivered', pct.toFixed(1) + '%', N(m.actual) + ' of ' + N(m.planTotal) + ' BCM'], ['Shortfall', N(m.gap), 'BCM not delivered', 'BCM'],
+    ['Estimated loss', INR(m.gap * S.cost_per_bcm), 'At ₹' + N(S.cost_per_bcm) + ' per BCM'], ['Days with a delay', String(delayDays), 'out of ' + m.days.length + ' day' + (m.days.length === 1 ? '' : 's')]];
+  var box = $('resTiles'); box.replaceChildren();
+  tiles.forEach(function (x, i) {
+    var c = el('div', 'kpi' + (i === 2 && m.gap > 0 ? ' alert' : ''), null, box); el('span', 'k', x[0], c);
+    var val = el('span', 'v', x[1], c); if (x[3]) el('small', null, x[3], val); el('span', 'n', x[2], c);
+  });
+  var max = Math.max.apply(null, m.stages.map(function (s) { return s.own; })) || 1, sb = $('resStages'); sb.replaceChildren();
+  m.stages.forEach(function (s, i) {
+    var row = el('div', 'sbar', null, sb), nm = el('div', 'nm', null, row);
+    el('b', null, s.stage, nm); var who = el('span', null, s.contractor + ' · ', nm); el('span', 'pill ' + STATUS_CLS[s.status], s.status, who).style.marginLeft = '2px';
+    var tr = el('div', 'track', null, row), f = el('span', null, null, tr); f.style.width = (s.own / max * 100) + '%'; f.style.background = css(['--s0', '--s1', '--s2'][i]);
+    var val = el('div', 'val', N(s.own) + ' BCM', row); el('small', null, INR(s.own * S.cost_per_bcm), val);
+  });
+  var now = new Date();
+  $('updated').textContent = 'Worked out at ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+}
+
+// Highlight the section in view in the section menu.
+if ('IntersectionObserver' in window) {
+  var links = {}; document.querySelectorAll('.secnav a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var spy = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting && links[e.target.id]) { Object.keys(links).forEach(function (k) { links[k].removeAttribute('aria-current'); }); links[e.target.id].setAttribute('aria-current', 'true'); } });
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  Object.keys(links).forEach(function (id) { var s = $(id); if (s) spy.observe(s); });
+}
+$('printBtn').addEventListener('click', function () { window.print(); });
+
+try { renderPlan(); } catch (e) { showError(e.message); }
+renderResults().catch(function (e) { showError('Could not work out the results: ' + e.message); $('resSource').textContent = 'The results could not be worked out.'; $('resTiles').replaceChildren(); });
+</script>
+</body>
+</html>
