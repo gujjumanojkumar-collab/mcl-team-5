@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 2000 240" role="img" aria-label="Drawing of an open-cast mine: benches cut into rock and a coal seam, a drill rig, a blast, a shovel loading a tipper, and a tipper on the haul road">
+  <!-- Original drawing for the MCL team tool. Made-up scene, not a real mine. -->
+  <defs>
+    <clipPath id="ground">
+      <path d="M0,120 H600 L608,142 H664 L672,164 H728 L736,186 H792 L800,208 H1200 L1208,186 H1264 L1272,164 H1328 L1336,142 H1392 L1400,120 H2000 V240 H0 Z"/>
+    </clipPath>
+    <radialGradient id="haze" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#e8590c" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#e8590c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lamp" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffd27a" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
+    </radialGradient>
+    <g id="truck">
+      <path d="M2,-46 q7,-8 15,-2 q8,-9 17,-1 q9,-8 16,0 q8,-6 16,1 q5,-3 8,2 Z" fill="#6b5a4b"/>
+      <path d="M0,-46 H74 L78,-22 H4 Z" fill="#f2b134"/>
+      <path d="M10,-44 L13,-24 M28,-44 L30,-24 M46,-44 L48,-24 M62,-44 L65,-24" stroke="#c98a1c" stroke-width="2"/>
+      <rect x="6" y="-22" width="98" height="6" fill="#2a313c"/>
+      <rect x="80" y="-42" width="24" height="20" rx="2" fill="#f2b134"/>
+      <rect x="86" y="-38" width="13" height="8" rx="1" fill="#10141a"/>
+      <circle cx="22" cy="-10" r="11" fill="#0e1116"/><circle cx="22" cy="-10" r="4" fill="#3d4552"/>
+      <circle cx="88" cy="-10" r="11" fill="#0e1116"/><circle cx="88" cy="-10" r="4" fill="#3d4552"/>
+    </g>
+  </defs>
+
+  <!-- Overburden dumps and far ridge -->
+  <path d="M0,120 C160,104 330,110 520,113 S860,104 1000,110 S1360,102 1560,112 S1860,104 2000,114 V120 Z" fill="#1b2129"/>
+  <path d="M60,120 L150,86 H360 L440,120 Z" fill="#212833"/>
+  <path d="M150,86 H360" stroke="#ffffff" stroke-opacity=".07" stroke-width="2"/>
+  <path d="M1600,120 L1680,90 H1880 L1950,120 Z" fill="#212833"/>
+  <path d="M1680,90 H1880" stroke="#ffffff" stroke-opacity=".07" stroke-width="2"/>
+
+  <!-- Light masts -->
+  <circle cx="300" cy="44" r="40" fill="url(#lamp)"/>
+  <path d="M300,48 V120" stroke="#39414d" stroke-width="3"/>
+  <rect x="288" y="38" width="24" height="9" rx="2" fill="#f2c46b"/>
+  <circle cx="1760" cy="40" r="40" fill="url(#lamp)"/>
+  <path d="M1760,44 V90" stroke="#39414d" stroke-width="3"/>
+  <rect x="1748" y="34" width="24" height="9" rx="2" fill="#f2c46b"/>
+
+  <!-- Rock layers, with the coal seam, cut by the benches of the pit -->
+  <g clip-path="url(#ground)">
+    <rect x="0" y="120" width="2000" height="18" fill="#3b3029"/>
+    <rect x="0" y="138" width="2000" height="22" fill="#342d28"/>
+    <rect x="0" y="160" width="2000" height="12" fill="#2e2a27"/>
+    <rect x="0" y="172" width="2000" height="18" fill="#0d0f12"/>
+    <rect x="0" y="190" width="2000" height="14" fill="#2b2724"/>
+    <rect x="0" y="204" width="2000" height="36" fill="#24211f"/>
+    <path d="M0,138 H2000 M0,160 H2000 M0,204 H2000" stroke="#ffffff" stroke-opacity=".06" stroke-width="1"/>
+    <path d="M0,172 H2000 M0,190 H2000" stroke="#ffffff" stroke-opacity=".1" stroke-width="1"/>
+    <path d="M0,178 H2000" stroke="#ffffff" stroke-opacity=".08" stroke-width="1" stroke-dasharray="10 14"/>
+  </g>
+  <!-- bench edges -->
+  <path d="M0,120 H600 L608,142 H664 L672,164 H728 L736,186 H792 L800,208 H1200 L1208,186 H1264 L1272,164 H1328 L1336,142 H1392 L1400,120 H2000" fill="none" stroke="#d7b48a" stroke-opacity=".4" stroke-width="1.5"/>
+
+  <!-- Drill rig on the top bench, with a row of drilled holes -->
+  <g>
+    <rect x="452" y="110" width="58" height="10" rx="5" fill="#0e1116"/>
+    <rect x="456" y="94" width="42" height="16" rx="2" fill="#e8590c"/>
+    <rect x="458" y="81" width="17" height="13" rx="1" fill="#e8590c"/>
+    <rect x="461" y="84" width="11" height="6" fill="#10141a"/>
+    <path d="M478,96 L492,64" stroke="#c2410c" stroke-width="4" stroke-linecap="round"/>
+    <rect x="491" y="26" width="8" height="86" fill="#e8590c"/>
+    <rect x="488" y="21" width="14" height="6" rx="1" fill="#c2410c"/>
+    <path d="M491,34 L499,44 L491,54 L499,64 L491,74 L499,84 L491,94 L499,104" fill="none" stroke="#10141a" stroke-opacity=".5" stroke-width="1.5"/>
+    <path d="M495,112 V124" stroke="#9aa3b2" stroke-width="2"/>
+    <g fill="#0b0d10"><ellipse cx="528" cy="121.5" rx="4" ry="1.6"/><ellipse cx="548" cy="121.5" rx="4" ry="1.6"/><ellipse cx="568" cy="121.5" rx="4" ry="1.6"/><ellipse cx="588" cy="121.5" rx="4" ry="1.6"/></g>
+  </g>
+
+  <!-- Shovel loading a tipper on the pit floor -->
+  <g>
+    <rect x="844" y="196" width="76" height="12" rx="6" fill="#0e1116"/>
+    <g fill="#2a313c"><circle cx="856" cy="202" r="3"/><circle cx="870" cy="202" r="3"/><circle cx="894" cy="202" r="3"/><circle cx="908" cy="202" r="3"/></g>
+    <rect x="852" y="172" width="58" height="24" rx="2" fill="#f2b134"/>
+    <rect x="844" y="176" width="12" height="18" rx="1" fill="#d9962a"/>
+    <rect x="888" y="158" width="22" height="16" rx="2" fill="#f2b134"/>
+    <rect x="893" y="162" width="12" height="7" fill="#10141a"/>
+    <path d="M902,176 L958,112" stroke="#f2b134" stroke-width="7" stroke-linecap="round"/>
+    <path d="M952,120 L972,140" stroke="#d9962a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M960,136 L988,133 L991,152 L965,155 Z" fill="#f2b134"/>
+    <path d="M966,155 l3,5 l4,-5 l4,5 l4,-5 l4,5 l3,-6" fill="none" stroke="#c98a1c" stroke-width="2"/>
+  </g>
+  <use href="#truck" xlink:href="#truck" transform="translate(934,208)"/>
+
+  <!-- Haul road cut up the right wall, with a tipper climbing it -->
+  <path d="M1112,208 L1392,120 H1404 V130 L1166,208 Z" fill="#4f4339"/>
+  <path d="M1112,208 L1392,120" stroke="#d7b48a" stroke-opacity=".45" stroke-width="1.5"/>
+  <path d="M1138,206 L1398,124" stroke="#f2b134" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="9 9"/>
+  <use href="#truck" xlink:href="#truck" transform="translate(1232,170) rotate(-18) scale(.82)"/>
+
+  <!-- Dust from the pit, lit by the masts -->
+  <ellipse cx="1000" cy="186" rx="520" ry="60" fill="url(#haze)"/>
+
+  <!-- Blast on the far bench: broken rock and a dust cloud -->
+  <g>
+    <g fill="#e8590c" fill-opacity=".22">
+      <circle cx="1530" cy="94" r="26"/><circle cx="1562" cy="80" r="32"/><circle cx="1598" cy="96" r="24"/><circle cx="1508" cy="106" r="16"/><circle cx="1578" cy="106" r="20"/>
+    </g>
+    <g fill="#f2b134" fill-opacity=".2">
+      <circle cx="1552" cy="92" r="16"/><circle cx="1576" cy="86" r="14"/>
+    </g>
+    <g fill="#4a3d33">
+      <rect x="1522" y="58" width="5" height="5" transform="rotate(20 1524 60)"/>
+      <rect x="1600" y="54" width="4" height="4" transform="rotate(35 1602 56)"/>
+      <rect x="1572" y="44" width="5" height="4" transform="rotate(-15 1574 46)"/>
+      <rect x="1626" y="74" width="4" height="4"/>
+    </g>
+    <path d="M1488,120 L1506,108 L1524,112 L1540,100 L1560,106 L1580,97 L1600,104 L1618,110 L1636,120 Z" fill="#3e3229"/>
+    <path d="M1506,108 L1512,116 M1540,100 L1548,112 M1580,97 L1584,110 M1618,110 L1612,118" stroke="#24211f" stroke-width="2"/>
+  </g>
+</svg>

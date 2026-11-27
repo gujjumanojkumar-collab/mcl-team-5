@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48">
+  <!-- Drill rig (stage 1). Shape only: the page colours it. -->
+  <rect x="2" y="38" width="38" height="8" rx="4"/>
+  <rect x="4" y="27" width="32" height="11" rx="1.5"/>
+  <path fill-rule="evenodd" d="M6 16 H20 V27 H6 Z M9 18.5 H17 V23 H9 Z"/>
+  <path d="M27 28 L41 12 L43.5 14 L30 30 Z"/>
+  <path fill-rule="evenodd" d="M42 4 H49 V40 H42 Z M44 8 H47 V13 H44 Z M44 16 H47 V21 H44 Z M44 24 H47 V29 H44 Z M44 32 H47 V37 H44 Z"/>
+  <rect x="40" y="1" width="11" height="4" rx="1"/>
+  <rect x="44.5" y="40" width="2" height="8"/>
+</svg>
