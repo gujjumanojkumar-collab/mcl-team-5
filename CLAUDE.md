@@ -93,3 +93,13 @@
   cards, tap-a-day timeline, section menu, phone-friendly shift log). Charts
   now use Chart.js from jsDelivr. Same made-up data and same calculations.
   Next: real shift data, and blame for drilling delays caused by uncleared rock.
+- Inputs page (Claude): index.html is now the Inputs page. It has mine
+  settings with a live "plan check", a shift-report form (with location,
+  urgency, status), a list of reports with edit and remove, and CSV import and
+  export (for future SAP exports). mine.js holds the shared calculations;
+  style.css the shared look. dashboard.html recalculates from the inputs, by
+  day: one blast a day, holes and rock checked shift by shift, and drilling
+  blocked by uncleared rock is charged to loading. With no reports it shows
+  made-up sample reports. Known problems: data is saved in each browser only
+  (localStorage), so team members do not see each other's reports. Next: move
+  the reports to the Supabase table so everyone shares them.
