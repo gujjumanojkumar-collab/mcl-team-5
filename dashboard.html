@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mine production delay monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,47 +15,50 @@
   <nav class="menu" aria-label="Main menu"><a href="index.html">Inputs</a><a href="dashboard.html" aria-current="page">Dashboard</a></nav>
 </div></header>
 
-<div class="hero"><div class="wrap">
-  <div class="eyebrow">Open-cast mine · Drilling → Blasting → Loading &amp; hauling</div>
-  <h1>Production delay monitor</h1>
-  <p class="lede" id="take">Working out the delays…</p>
-  <div class="chips">
-    <span class="chip" id="planChip">Plan …</span>
-    <span class="chip" id="period">Period: …</span>
-    <span class="chip sample" id="sourceChip">…</span>
+<div class="hero"><div class="wrap hero-grid">
+  <div>
+    <div class="eyebrow">Production delay monitor · <span id="period">Loading</span></div>
+    <h1 id="verdict">Working out the delays…</h1>
+    <p class="lede" id="take">Reading the shift reports.</p>
+    <div class="chips"><span class="chip" id="planChip">Plan</span><span class="chip sample" id="sourceChip">Loading</span></div>
+    <div class="btns no-print"><a class="btn" href="index.html">Change the inputs</a><button type="button" class="btn" id="printBtn">Print or save as PDF</button></div>
   </div>
-  <div class="btns"><a class="btn" href="index.html">Change the inputs</a></div>
+  <div class="gauge" aria-live="polite">
+    <div class="gauge-ring"><div class="ring" id="ring"></div><div class="in"><strong id="ringPct">—</strong><span>of plan delivered</span></div></div>
+    <p id="ringSub">&nbsp;</p>
+  </div>
 </div></div>
 
-<nav class="secnav" aria-label="Sections"><div class="wrap">
-  <a href="#stages">Stages</a><a href="#timeline">Day by day</a><a href="#buffers">Work in hand</a><a href="#why">Causes</a><a href="#worstdays">Worst days</a><a href="#notes">How it is worked out</a>
+<nav class="secnav no-print" aria-label="Sections"><div class="wrap">
+  <a href="#line">Production line</a><a href="#timeline">Day by day</a><a href="#why">Causes</a><a href="#buffers">Work in hand</a><a href="#delays">Delay days</a><a href="#notes">How it is worked out</a>
 </div></nav>
 
 <main class="wrap">
   <div id="err" role="alert"></div>
-  <div class="warn-banner" id="planWarn" hidden></div>
-  <section class="kpis" id="kpis" aria-label="Key figures"></section>
+  <details class="notice" id="planWarn" hidden>
+    <summary id="planWarnSum">Plan settings need checking</summary>
+    <ul id="planWarnList"></ul>
+    <p><a href="index.html#settings">Open the plan check on the Inputs page</a></p>
+  </details>
 
-  <section id="stages">
-    <div class="head"><h2>Where the delay sits</h2>
-      <p class="sub"><b>Own loss</b> is output a contractor's own machines, supply or clearance could not deliver. <b>Starved</b> is output lost because the stage before ran out of work, so it is not counted against that contractor. When drilling is blocked because blasted rock was not cleared, the loss is charged to loading and hauling.</p></div>
+  <section class="kpis" id="kpis" aria-label="Key figures">
+    <div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div><div class="kpi skeleton"></div>
+  </section>
+
+  <section id="line">
+    <div class="head"><h2>Where the delay sits on the production line</h2>
+      <p class="sub"><b>Own loss</b> is output a contractor's own machines, supply or clearance could not deliver. <b>Starved</b> is output lost because the stage before ran out of work, so it is not counted against that contractor. The tanks show the work in hand between the stages after the last day.</p></div>
     <div class="line3" id="line3"></div>
   </section>
 
   <section id="timeline">
     <div class="head"><h2>Day by day: which stage fell short</h2>
-      <p class="sub">Each box is one day. Tap a box to see that day's figures.</p></div>
+      <p class="sub">Each box is one day. A box with a border is where a delay started. A red box without a border was starved by the stage before it. Tap a box to see that day.</p></div>
     <div class="panel">
       <div class="legend"><span><i style="background:var(--ok)"></i>95% of plan or more</span><span><i style="background:var(--warn)"></i>80–95%</span><span><i style="background:var(--bad)"></i>Below 80%</span><span><i class="own"></i>Delay started here</span></div>
       <div class="heat" id="heat"></div>
       <div class="day" id="day" aria-live="polite"></div>
     </div>
-  </section>
-
-  <section id="buffers">
-    <div class="head"><h2>Work in hand between stages</h2>
-      <p class="sub">Drilled holes waiting to be blasted, and blasted rock waiting to be loaded, at the start of each day, counted in days of work. Below the red line, the next stage will run short.</p></div>
-    <div class="panel"><div class="chart tall"><canvas id="coverChart" role="img" aria-label="Line chart of days of work in hand for drilled holes and blasted rock"></canvas></div></div>
   </section>
 
   <section id="why" class="grid2">
@@ -67,22 +70,28 @@
       </div>
     </div>
     <div>
-      <div class="head"><h2>What moves with the delay</h2><p class="sub">How closely each recorded figure moves with its stage's own loss, day by day. Strong means it is worth watching every shift.</p></div>
+      <div class="head"><h2>What moves with the delay</h2><p class="sub">The five recorded figures that move most closely with each stage's own loss, day by day.</p></div>
       <div class="panel"><div class="drv" id="drivers"></div></div>
     </div>
   </section>
 
-  <section id="worstdays">
-    <div class="head"><h2>Worst days</h2><p class="sub">The 15 days with the biggest output gap. Filter by where the delay started.</p></div>
-    <div class="panel">
+  <section id="buffers">
+    <div class="head"><h2>Work in hand between stages</h2>
+      <p class="sub">Drilled holes waiting to be blasted, and blasted rock waiting to be loaded, at the start of each day, in days of work. Below the red line, the next stage is about to run short.</p></div>
+    <div class="panel"><div class="chart tall"><canvas id="coverChart" role="img" aria-label="Line chart of days of work in hand for drilled holes and blasted rock"></canvas></div></div>
+  </section>
+
+  <section id="delays">
+    <div class="head"><h2>Days with a delay</h2><p class="sub" id="delaysSub">Biggest output gap first. Filter by where the delay started.</p></div>
+    <div class="panel daytable">
       <div class="filters" id="filters" role="group" aria-label="Filter days"></div>
-      <table><thead><tr><th>Date</th><th>Shifts</th><th class="r">Gap, BCM</th><th class="r">Loss, ₹</th><th>Started at</th><th>Cause</th></tr></thead><tbody id="worst"></tbody></table>
+      <table><thead><tr><th>Date</th><th>Started at</th><th>Cause</th><th class="r">Output gap, BCM</th><th class="r">Loss, ₹</th></tr></thead><tbody id="worst"></tbody></table>
     </div>
   </section>
 
   <details class="notes" id="notes"><summary>How it is worked out</summary><ul id="noteList"></ul></details>
 </main>
-<footer>MCL team tool · IIM Sambalpur MDP · made-up data only</footer>
+<footer><div class="wrap"><span>MCL team tool · IIM Sambalpur MDP · made-up data only</span><span id="updated"></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -90,7 +99,7 @@
 <script src="mine.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
-var N = Mine.N, STAGES = Mine.STAGES;
+var N = Mine.N, STAGES = Mine.STAGES, SHORT = ['Drilling', 'Blasting', 'Loading'];
 var INR = function (v) { return v >= 1e7 ? '₹' + (v / 1e7).toFixed(2) + ' Cr' : v >= 1e5 ? '₹' + (v / 1e5).toFixed(1) + ' L' : '₹' + N(v); };
 var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function dl(s) { var p = s.split('-'); return p[2] + ' ' + MON[+p[1] - 1]; }
@@ -98,8 +107,10 @@ function css(n) { return getComputedStyle(document.documentElement).getPropertyV
 function el(tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
 function level(v) { return v == null ? 'na' : v >= 95 ? 'ok' : v >= 80 ? 'warn' : 'bad'; }
 function stageColor(i) { return css(['--s0', '--s1', '--s2'][i]); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+var STATUS_CLS = { 'Primary defaulter': 'bad', 'Contributing': 'warn', 'Starved by upstream': 'warn', 'On plan': 'ok' };
 
-var M = null, S = null, isSample = false, charts = [], filter = 'All';
+var M = null, S = null, isSample = false, charts = [], filter = 'All', selectedDate = null;
 
 async function load() {
   S = Mine.loadSettings();
@@ -110,142 +121,220 @@ async function load() {
   M.entryCount = entries.length;
 }
 
-function renderTop(m) {
-  var t = $('take'); t.replaceChildren();
-  if (!m.days.length) { t.textContent = 'There are no shift reports with a date yet. Add some on the Inputs page.'; return false; }
-  var pct = m.actual / m.planTotal * 100, def = m.stages.slice().sort(function (a, b) { return b.own - a.own; })[0];
-  t.append('In ' + m.days.length + ' day' + (m.days.length === 1 ? '' : 's') + ' the mine moved ', el('b', null, N(m.actual) + ' BCM'), ' against a plan of ' + N(m.planTotal) + ': ', el('b', null, pct.toFixed(1) + '%'), '. ');
-  if (def.own > 0) t.append('The biggest own-caused loss sits with ', el('b', null, def.stage + ' (' + def.contractor + ')'), (def.top === 'Not recorded' ? '. The reason was not recorded.' : ', mostly from ' + def.top.toLowerCase() + '.'));
-  else t.append('No stage caused a loss of its own.');
+/* ---------- Verdict, gauge and key figures ---------- */
+function renderHero(m) {
+  var v = $('verdict'), t = $('take');
+  v.replaceChildren(); t.replaceChildren();
   $('planChip').textContent = 'Plan ' + N(S.target_bcm_day) + ' BCM a day';
-  $('period').textContent = dl(m.days[0].date) + ' – ' + dl(m.days[m.days.length - 1].date) + ' ' + m.days[m.days.length - 1].date.slice(0, 4);
-  $('sourceChip').textContent = (isSample ? 'Made-up sample reports' : m.entryCount + ' shift report' + (m.entryCount === 1 ? '' : 's')) + (Mine.Store.mode === 'database' ? ' · team database' : ' · this browser only');
-  var bad = m.days.filter(function (x) { return x.gap >= x.plan * 0.05; }).length;
-  var tiles = [
-    { k: 'Output vs plan', v: pct.toFixed(1) + '%', n: N(m.actual) + ' of ' + N(m.planTotal) + ' BCM', meter: pct, cls: pct < 95 ? 'alert' : '' },
-    { k: 'Shortfall', v: N(m.gap), n: 'BCM not delivered' },
-    { k: 'Estimated loss', v: INR(m.gap * S.cost_per_bcm), n: '₹' + N(m.gap * S.cost_per_bcm) + ' at ₹' + N(S.cost_per_bcm) + ' per BCM', cls: m.gap > 0 ? 'alert' : '' },
-    { k: 'Days below 95%', v: bad + ' / ' + m.days.length, n: Math.round(bad / m.days.length * 100) + '% of days' }];
-  $('kpis').replaceChildren();
-  tiles.forEach(function (x) {
-    var c = el('div', 'kpi ' + (x.cls || ''), null, $('kpis')); el('span', 'k', x.k, c); el('span', 'v', x.v, c); el('span', 'n', x.n, c);
-    if (x.meter != null) { var mm = el('div', 'meter', null, c), s = el('span', null, null, mm); s.style.width = Math.min(100, x.meter) + '%'; s.style.background = css('--' + level(x.meter)); }
-  });
-  var issues = Mine.checks(S).filter(function (c) { return c.level !== 'ok'; });
-  var w = $('planWarn'); w.hidden = !issues.length; w.replaceChildren();
-  if (issues.length) { w.append(el('b', null, issues.length + ' plan setting' + (issues.length > 1 ? 's look' : ' looks') + ' wrong. '), issues[0].text + ' '); var a = el('a', null, 'Check the inputs', w); a.href = 'index.html#settings'; }
+  $('sourceChip').textContent = (isSample ? 'Made-up sample reports' : plural(m.entryCount, 'shift report')) + (Mine.Store.mode === 'database' ? ' · team database' : ' · this browser only');
+  if (!m.days.length) {
+    v.textContent = 'No shift reports yet';
+    t.textContent = 'Add shift reports on the Inputs page, and this page will work out who caused each delay.';
+    $('period').textContent = 'no data'; $('ringPct').textContent = '—'; $('ringSub').textContent = '';
+    return false;
+  }
+  var pct = m.actual / m.planTotal * 100;
+  var ranked = m.stages.slice().sort(function (a, b) { return b.own - a.own; }), def = ranked[0];
+  if (def.status === 'Primary defaulter') {
+    v.append(el('span', 'hl', def.stage), ' is the primary defaulter');
+    t.append(def.contractor + ' lost ', el('b', null, N(def.own) + ' BCM'), ' of output for its own reasons (' + INR(def.own * S.cost_per_bcm) + ')');
+    t.append(def.top === 'Not recorded' ? ', but the reasons were not recorded. ' : ', mostly from ' + def.top.toLowerCase() + '. ');
+    var others = ranked.slice(1).filter(function (s) { return s.status === 'Contributing'; });
+    if (others.length) t.append(others.map(function (s) { return s.stage + ' (' + s.contractor + ')'; }).join(' and ') + ' also contributed.');
+  } else {
+    v.textContent = 'No contractor is at fault';
+    t.textContent = 'Every stage stayed within 2% of its plan for its own reasons.';
+  }
+  var last = m.days[m.days.length - 1].date;
+  $('period').textContent = dl(m.days[0].date) + ' – ' + dl(last) + ' ' + last.slice(0, 4);
+  var ring = $('ring');
+  ring.style.setProperty('--ring-col', 'var(--band-' + level(pct) + ')');
+  requestAnimationFrame(function () { ring.style.setProperty('--p', Math.min(100, pct).toFixed(1)); });
+  $('ringPct').textContent = pct.toFixed(1) + '%';
+  $('ringSub').replaceChildren(el('b', null, N(m.actual)), ' of ' + N(m.planTotal) + ' BCM');
   return true;
 }
-function renderStages(m) {
+function renderKpis(m) {
+  var bad = m.days.filter(function (x) { return x.gap >= x.plan * 0.05; }).length, top = m.causes[0];
+  var tiles = [
+    { k: 'Shortfall', v: N(m.gap), u: 'BCM', n: (m.gap / m.planTotal * 100).toFixed(1) + '% of plan not delivered' },
+    { k: 'Estimated loss', v: INR(m.gap * S.cost_per_bcm), n: 'At ₹' + N(S.cost_per_bcm) + ' per BCM not delivered', cls: m.gap > 0 ? 'alert' : '' },
+    { k: 'Days below 95%', v: String(bad), u: 'of ' + m.days.length, n: Math.round(bad / m.days.length * 100) + '% of days' },
+    { k: 'Biggest single cause', v: top ? top.cause : 'None', text: true, n: top ? STAGES[top.si] + ' · ' + N(top.loss) + ' BCM' : 'No own-caused loss' }];
+  var box = $('kpis'); box.replaceChildren();
+  tiles.forEach(function (x) {
+    var c = el('div', 'kpi ' + (x.cls || ''), null, box); el('span', 'k', x.k, c);
+    var v = el('span', 'v' + (x.text ? ' text' : ''), x.v, c); if (x.u) el('small', null, x.u, v);
+    el('span', 'n', x.n, c);
+  });
+}
+function renderNotice() {
+  var issues = Mine.checks(S).filter(function (c) { return c.level !== 'ok'; }), w = $('planWarn');
+  w.hidden = !issues.length;
+  if (!issues.length) return;
+  var sum = el('span'); sum.append(el('b', null, plural(issues.length, 'plan setting') + (issues.length === 1 ? ' needs' : ' need') + ' checking.'), ' The figures below may be off until ' + (issues.length === 1 ? 'it is' : 'they are') + ' fixed.');
+  $('planWarnSum').replaceChildren(sum);
+  var ul = $('planWarnList'); ul.replaceChildren();
+  issues.forEach(function (c) { el('li', null, c.text, ul); });
+}
+
+/* ---------- Production line ---------- */
+function buffer(m, i) {
+  var days = i === 1 ? m.closing_holes / S.holes_plan_day : m.closing_rock / S.target_bcm_day;
+  var amount = i === 1 ? N(m.closing_holes) + ' holes' : N(m.closing_rock) + ' BCM';
+  var lv = days >= 1 ? 'ok' : days >= 0.5 ? 'warn' : 'bad';
+  var b = el('div', 'buffer');
+  b.setAttribute('role', 'img');
+  b.setAttribute('aria-label', (i === 1 ? 'Drilled holes' : 'Blasted rock') + ' in hand: ' + days.toFixed(1) + ' days of work (' + amount + ')');
+  var tank = el('div', 'tank', null, b), fill = el('span', null, null, tank);
+  fill.style.height = Math.min(100, days / 2 * 100) + '%'; fill.style.background = css('--' + lv);
+  var txt = el('div', null, null, b);
+  el('strong', null, days.toFixed(1) + ' days', txt); el('br', null, null, txt);
+  el('small', null, (i === 1 ? 'of drilled holes' : 'of blasted rock') + ' in hand (' + amount + ')', txt);
+  return b;
+}
+function renderLine(m) {
   var box = $('line3'); box.replaceChildren();
-  var subs = ['Plan ' + N(S.holes_plan_day) + ' holes a day', 'Plan ' + N(S.explosive_plan_kg_day / 1000) + ' t explosive · blast at ' + S.blast_time, S.shovels_total + ' shovels · ' + S.tippers_total + ' tippers of ' + S.tipper_m3 + ' m³'];
-  var unit = ['holes drilled', 'holes blasted', 'rock moved'];
+  var subs = ['plan ' + N(S.holes_plan_day) + ' holes a day', 'plan ' + N(S.explosive_plan_kg_day / 1000) + ' t explosive, blast at ' + S.blast_time, S.shovels_total + ' shovels, ' + S.tippers_total + ' tippers'];
+  var what = ['Holes drilled against plan', 'Holes blasted against plan', 'Rock moved against plan'];
   m.stages.forEach(function (s, i) {
-    if (i) { var lk = el('div', 'link', null, box); el('span', null, '→', lk).setAttribute('aria-hidden', 'true'); }
-    var cls = { 'Primary defaulter': 'bad', 'Contributing': 'warn', 'Starved by upstream': 'warn', 'On plan': 'ok' }[s.status];
+    if (i) box.append(buffer(m, i));
+    var cls = STATUS_CLS[s.status];
     var c = el('article', 'stage' + (cls === 'bad' ? ' is-bad' : ''), null, box);
-    var top = el('div', 'stage-top', null, c), l = el('div', null, null, top);
-    el('div', 'idx', 'Stage ' + (i + 1), l); el('h3', null, s.stage, l); el('p', 'who', s.contractor + ' · ' + subs[i], l);
+    var top = el('div', 'stage-top', null, c), no = el('span', 'stage-no', null, top), dot = el('i', null, null, no);
+    dot.style.background = stageColor(i); no.append('Stage ' + (i + 1));
     el('span', 'pill ' + cls, s.status, top);
+    var hd = el('div', null, null, c); el('h3', null, s.stage, hd); el('p', 'who', s.contractor + ' · ' + subs[i], hd);
     var big = el('div', 'big', N(s.own), c); el('small', null, 'BCM own loss', big);
-    var mm = el('div', 'meter', null, c), bar = el('span', null, null, mm); bar.style.width = Math.min(100, s.done) + '%'; bar.style.background = stageColor(i);
+    var money = el('div', 'money', null, c); money.append(el('b', null, INR(s.own * S.cost_per_bcm)), ' · ' + s.ownPct.toFixed(1) + '% of plan');
+    var pr = el('div', null, null, c), lab = el('div', 'progress-label', null, pr);
+    el('span', null, what[i], lab); el('b', null, s.done.toFixed(1) + '%', lab);
+    var bar = el('div', 'progress', null, pr), sp = el('span', null, null, bar);
+    sp.style.width = Math.min(100, s.done) + '%'; sp.style.background = stageColor(i);
     var f = el('dl', 'facts', null, c);
-    var rows = [['Achieved (' + unit[i] + ')', s.done.toFixed(1) + '%'], ['Share of plan lost', s.ownPct.toFixed(1) + '%'], ['Cost of own loss', INR(s.own * S.cost_per_bcm)], ['Days with own delay', String(s.bad)],
-      ['Starved by stage before', i === 0 ? '— first stage' : N(s.starved) + ' BCM']];
-    if (i === 2) rows.push(['Of which: blocked drilling', N(s.blocked) + ' BCM']);
+    var rows = [['Days with own delay', String(s.bad)], ['Starved by stage before', i === 0 ? '— first stage' : N(s.starved) + ' BCM']];
+    if (i === 2) rows.push(['Of own loss: drilling blocked', N(s.blocked) + ' BCM']);
     rows.forEach(function (p) { el('dt', null, p[0], f); el('dd', null, p[1], f); });
     var ca = el('div', 'cause', null, c);
     if (s.own > 0) ca.append('Main cause: ', el('b', null, s.top), ' (' + N(s.topLoss) + ' BCM)'); else ca.textContent = 'No own-caused loss.';
   });
 }
+
+/* ---------- Day by day ---------- */
 function renderHeat(m) {
   var d = m.days, h = $('heat'); h.replaceChildren();
   var narrow = window.innerWidth < 560;
-  h.style.gridTemplateColumns = (narrow ? '64px' : '130px') + ' repeat(' + d.length + ',minmax(0,1fr))';
-  var short = ['Drilling', 'Blasting', 'Loading'];
+  h.style.gridTemplateColumns = (narrow ? '64px' : '136px') + ' repeat(' + d.length + ',minmax(0,1fr))';
   STAGES.forEach(function (st, i) {
-    el('div', 'lab', narrow ? short[i] : st, h);
+    el('div', 'lab', narrow ? SHORT[i] : st, h);
     d.forEach(function (r, j) {
       var v = r.pct[i], b = el('button', 'cell ' + level(v) + (r.started === st ? ' own' : ''), null, h);
-      var vt = v == null ? 'no blast report' : v.toFixed(0) + '% of plan';
       b.type = 'button'; b.dataset.j = j; b.setAttribute('aria-pressed', 'false');
-      b.setAttribute('aria-label', dl(r.date) + ', ' + st + ': ' + vt + (r.started === st ? ', delay started here' : ''));
+      b.setAttribute('aria-label', dl(r.date) + ', ' + st + ': ' + (v == null ? 'no blast report' : v.toFixed(0) + '% of plan') + (r.started === st ? ', delay started here' : ''));
+      b.title = dl(r.date) + ' · ' + st + ' ' + (v == null ? 'no report' : v.toFixed(0) + '%');
       b.addEventListener('click', function () { selectDay(j); });
     });
   });
   el('div', null, null, h);
-  var step = Math.max(1, Math.ceil(d.length / (narrow ? 4 : 6)));
-  d.forEach(function (r, j) { var t = el('div', 'tick', j % step === 0 ? dl(r.date) : '', h); t.style.overflow = 'visible'; });
-  var worst = d.reduce(function (a, r, j) { return r.gap > d[a].gap ? j : a; }, 0); selectDay(worst);
+  var step = Math.max(1, Math.ceil(d.length / (narrow ? 4 : 7)));
+  d.forEach(function (r, j) { el('div', 'tick', j % step === 0 ? dl(r.date) : '', h); });
+  var keep = d.findIndex(function (r) { return r.date === selectedDate; });
+  selectDay(keep >= 0 ? keep : d.reduce(function (a, r, j) { return r.gap > d[a].gap ? j : a; }, 0));
 }
 function selectDay(j) {
-  var r = M.days[j];
+  var r = M.days[j]; selectedDate = r.date;
   document.querySelectorAll('.cell').forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.j == j ? 'true' : 'false'); });
   var box = $('day'); box.replaceChildren();
   var t = el('div', 'day-title', null, box); el('strong', null, dl(r.date) + ' ' + r.date.slice(0, 4), t);
-  el('span', 'sub', r.started ? 'Delay started at ' + r.started + ': ' + r.cause : (r.stage === 'Starved by upstream' ? 'Output short, but no stage at fault that day: not enough blasted rock from earlier days' : 'All stages close to plan'), t);
+  el('p', 'sub', r.started ? 'Delay started at ' + r.started + ': ' + r.cause.toLowerCase() + '.' : (r.stage === 'Starved by upstream' ? 'Output was short, but no stage was at fault that day: there was not enough blasted rock from earlier days.' : 'All stages were close to plan.'), t);
   STAGES.forEach(function (st, i) { var c = el('div', null, null, box); el('div', 'dk', st, c); el('div', 'dv ' + level(r.pct[i]), r.pct[i] == null ? 'No report' : r.pct[i].toFixed(0) + '%', c); });
   var c = el('div', null, null, box); el('div', 'dk', 'Output gap', c); el('div', 'dv', N(r.gap) + ' BCM', c);
   c = el('div', null, null, box); el('div', 'dk', 'Estimated loss', c); el('div', 'dv', INR(r.gap * S.cost_per_bcm), c);
   if (r.shifts < S.shifts_per_day) { c = el('div', null, null, box); el('div', 'dk', 'Reports', c); el('div', 'dv warn', r.shifts + ' of ' + S.shifts_per_day + ' shifts', c); }
 }
-function chartBox(id, msg) { var cv = $(id); if (!cv) return; var p = el('p', 'chart-err', msg); cv.parentNode.replaceWith(p); }
+
+/* ---------- Charts ---------- */
+function chartBox(id, msg) { var cv = $(id); if (!cv) return; cv.parentNode.replaceWith(el('p', 'chart-err', msg)); }
 function renderCharts(m) {
   charts.forEach(function (c) { c.destroy(); }); charts = [];
-  if (typeof Chart === 'undefined') { chartBox('coverChart', 'This chart could not be drawn. Error: Chart.js did not load. Check the internet connection.'); chartBox('causeChart', 'This chart could not be drawn. Error: Chart.js did not load.'); return; }
+  if (typeof Chart === 'undefined') { ['coverChart', 'causeChart'].forEach(function (id) { chartBox(id, 'This chart could not be drawn. Error: Chart.js did not load. Check the internet connection.'); }); return; }
   var ink = css('--muted'), grid = css('--line'), bad = css('--bad');
   Chart.defaults.font.family = css('--f-body'); Chart.defaults.font.size = 13; Chart.defaults.color = ink;
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   try {
-    var labels = m.days.map(function (r) { return dl(r.date); });
-    charts.push(new Chart($('coverChart'), { type: 'line', data: { labels: labels, datasets: [
-      { label: 'Blasted rock in hand', data: m.days.map(function (r) { return +r.rock_cover.toFixed(2); }), borderColor: stageColor(2), backgroundColor: stageColor(2) + '22', fill: true, tension: 0, pointRadius: 0, borderWidth: 2 },
-      { label: 'Drilled holes in hand', data: m.days.map(function (r) { return +r.hole_cover.toFixed(2); }), borderColor: stageColor(0), tension: 0, pointRadius: 0, borderWidth: 2 },
-      { label: 'Danger line', data: labels.map(function () { return 0.5; }), borderColor: bad, borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5 }] },
-      options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 3 } }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + c.parsed.y.toFixed(2) + ' days'; } } } },
-        scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: window.innerWidth < 560 ? 4 : 8, maxRotation: 0 } }, y: { beginAtZero: true, grid: { color: grid }, title: { display: true, text: 'Days of work' } } } } }));
-  } catch (e) { chartBox('coverChart', 'This chart could not be drawn. Error: ' + e.message); }
-  try {
-    if (!m.causes.length) { chartBox('causeChart', 'No own-caused losses to rank.'); return; }
-    var wrapL = function (s) { var w = s.split(' '), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > 22) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); out.push(cur); return out; };
-    var short = ['drilling', 'blasting', 'loading'];
-    charts.push(new Chart($('causeChart'), { type: 'bar', data: { labels: m.causes.map(function (c) { return wrapL(/^(Not recorded|Other)/.test(c.cause) ? c.cause + ' (' + short[c.si] + ')' : c.cause); }),
-      datasets: [{ data: m.causes.map(function (c) { return Math.round(c.loss); }), backgroundColor: m.causes.map(function (c) { return stageColor(c.si); }), borderRadius: 4, barPercentage: .8 }] },
-      options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (c) { var x = m.causes[c[0].dataIndex]; return STAGES[x.si] + ': ' + x.cause; }, label: function (c) { return N(c.parsed.x) + ' BCM · ' + INR(c.parsed.x * S.cost_per_bcm); } } } },
-        scales: { x: { grid: { color: grid }, ticks: { callback: function (v) { return v >= 1000 ? (v / 1000) + 'k' : v; } }, title: { display: true, text: 'BCM lost' } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } } }));
+    if ($('causeChart')) {
+      if (!m.causes.length) chartBox('causeChart', 'No own-caused losses to rank.');
+      else {
+        var wrapL = function (s) { var w = s.split(' '), out = [], cur = ''; w.forEach(function (x) { if ((cur + ' ' + x).trim().length > 22) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); out.push(cur); return out; };
+        var short = ['drilling', 'blasting', 'loading'];
+        charts.push(new Chart($('causeChart'), { type: 'bar',
+          data: { labels: m.causes.map(function (c) { return wrapL(/^(Not recorded|Other)/.test(c.cause) ? c.cause + ' (' + short[c.si] + ')' : c.cause); }),
+            datasets: [{ data: m.causes.map(function (c) { return Math.round(c.loss); }), backgroundColor: m.causes.map(function (c) { return stageColor(c.si); }), borderRadius: 4, barPercentage: .78 }] },
+          options: { indexAxis: 'y', maintainAspectRatio: false, animation: calm ? false : { duration: 700 },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { title: function (c) { var x = m.causes[c[0].dataIndex]; return STAGES[x.si] + ': ' + x.cause; }, label: function (c) { return N(c.parsed.x) + ' BCM · ' + INR(c.parsed.x * S.cost_per_bcm); } } } },
+            scales: { x: { grid: { color: grid }, border: { display: false }, ticks: { callback: function (v) { return v >= 1000 ? (v / 1000) + 'k' : v; } }, title: { display: true, text: 'BCM lost' } }, y: { grid: { display: false }, ticks: { autoSkip: false, color: css('--ink') } } } } }));
+      }
+    }
   } catch (e) { chartBox('causeChart', 'This chart could not be drawn. Error: ' + e.message); }
+  try {
+    if ($('coverChart')) {
+      var labels = m.days.map(function (r) { return dl(r.date); });
+      charts.push(new Chart($('coverChart'), { type: 'line', data: { labels: labels, datasets: [
+        { label: 'Blasted rock in hand', data: m.days.map(function (r) { return +r.rock_cover.toFixed(2); }), borderColor: stageColor(2), backgroundColor: stageColor(2) + '22', fill: true, tension: 0, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 },
+        { label: 'Drilled holes in hand', data: m.days.map(function (r) { return +r.hole_cover.toFixed(2); }), borderColor: stageColor(0), tension: 0, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 },
+        { label: 'Danger line (half a day)', data: labels.map(function () { return 0.5; }), borderColor: bad, borderDash: [6, 4], pointRadius: 0, borderWidth: 1.5 }] },
+        options: { maintainAspectRatio: false, animation: calm ? false : { duration: 700 }, interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 3, padding: 16 } }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + c.parsed.y.toFixed(2) + ' days'; } } } },
+          scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: window.innerWidth < 560 ? 4 : 8, maxRotation: 0 } }, y: { beginAtZero: true, grid: { color: grid }, border: { display: false }, title: { display: true, text: 'Days of work' } } } } }));
+    }
+  } catch (e) { chartBox('coverChart', 'This chart could not be drawn. Error: ' + e.message); }
 }
 function renderDrivers(m) {
   var box = $('drivers'); box.replaceChildren();
-  if (!m.drivers.length) { el('p', 'sub', m.days.length < 5 ? 'Add reports for at least 5 days to see which figures move with the delay.' : 'No figure moved with the delays.', box); return; }
-  m.drivers.forEach(function (d) {
+  if (!m.drivers.length) { el('p', 'sub', m.days.length < 5 ? 'Add reports for at least 5 days to see which figures move with the delay.' : 'No recorded figure moved with the delays.', box); return; }
+  m.drivers.slice(0, 5).forEach(function (d) {
     var a = Math.abs(d.r), word = a >= 0.7 ? 'Strong link' : a >= 0.4 ? 'Moderate link' : 'Weak link';
-    var row = el('div', 'drv-row', null, box), nm = el('div', 'drv-name', d.name, row); el('small', null, STAGES[d.si] + ' · ' + d.unit + (d.r < 0 ? ' · loss rises as this falls' : ''), nm);
+    var row = el('div', 'drv-row', null, box), nm = el('div', 'drv-name', d.name, row);
+    el('small', null, STAGES[d.si] + ' · ' + d.unit + (d.r < 0 ? ' · loss rises as this falls' : ''), nm);
     var v = el('div', 'drv-val', 'r = ' + d.r.toFixed(2), row); el('small', null, word, v);
     var b = el('div', 'drv-bar', null, row), s = el('span', null, null, b); s.style.width = (a * 100) + '%'; s.style.background = stageColor(d.si);
   });
-  if (isSample) el('p', 'sub', 'Sample data: these links are built into the made-up reports, so they look stronger than real data will.', box);
+  el('p', 'sub', isSample ? 'r runs from 0 (no link) to 1 (moves in step). These links are built into the made-up reports, so they look stronger than real data will.' : 'r runs from 0 (no link) to 1 (moves in step). A link shows what to watch, not proof of cause.', box);
 }
-function renderFilters() {
+
+/* ---------- Days with a delay ---------- */
+function delayDays(m) { return m.days.filter(function (r) { return r.stage !== 'On plan'; }); }
+function renderFilters(m) {
   var f = $('filters'); f.replaceChildren();
+  var all = delayDays(m);
   ['All', 'Drilling', 'Blasting', 'Loading & hauling', 'Starved by upstream'].forEach(function (x) {
-    var b = el('button', null, x, f); b.type = 'button'; b.setAttribute('aria-pressed', x === filter ? 'true' : 'false');
-    b.addEventListener('click', function () { filter = x; renderFilters(); renderTable(M); });
+    var n = x === 'All' ? all.length : all.filter(function (r) { return r.stage === x; }).length;
+    if (x !== 'All' && !n) return;
+    var b = el('button', null, x + ' ', f); el('span', 'count', String(n), b);
+    b.type = 'button'; b.setAttribute('aria-pressed', x === filter ? 'true' : 'false');
+    b.addEventListener('click', function () { filter = x; renderFilters(M); renderTable(M); });
   });
 }
 function tagStyle(t, stage) { var i = STAGES.indexOf(stage); if (i >= 0) { t.style.color = stageColor(i); t.style.background = stageColor(i) + '1f'; } else { t.style.color = css('--warn'); t.style.background = css('--warn-bg'); } }
 function renderTable(m) {
   var tb = $('worst'); tb.replaceChildren();
-  var rows = m.days.filter(function (r) { return r.gap > 0 && (filter === 'All' || r.stage === filter); }).sort(function (a, b) { return b.gap - a.gap; }).slice(0, 15);
-  if (!rows.length) { var tr = el('tr', null, null, tb), td = el('td', 'empty', 'No days match this filter.', tr); td.colSpan = 6; return; }
-  var narrow = window.innerWidth <= 640;
+  var all = delayDays(m);
+  if (filter !== 'All' && !all.some(function (r) { return r.stage === filter; })) filter = 'All';
+  var rows = all.filter(function (r) { return filter === 'All' || r.stage === filter; }).sort(function (a, b) { return b.gap - a.gap || a.date.localeCompare(b.date); });
+  $('delaysSub').textContent = all.length ? plural(all.length, 'day') + ' out of ' + m.days.length + ' had a delay. Biggest output gap first.' : 'No delays: every day was close to plan.';
+  if (!rows.length) { var tr = el('tr', null, null, tb), td = el('td', 'empty', 'No delays to show.', tr); td.colSpan = 5; return; }
   rows.forEach(function (r) {
     var tr = el('tr', null, null, tb);
-    [['c-date', narrow ? dl(r.date) + ' · ' + r.shifts + ' shifts' : dl(r.date)], ['c-shift', r.shifts + ' of ' + S.shifts_per_day], ['c-gap r', N(r.gap), 1], ['c-loss r', N(r.gap * S.cost_per_bcm), 1]].forEach(function (x) { var td = el('td', x[0], null, tr); el('span', x[2] ? 'num' : null, x[1], td); });
+    el('td', 'c-date', dl(r.date) + (r.shifts < S.shifts_per_day ? ' (' + r.shifts + ' of ' + S.shifts_per_day + ' shifts)' : ''), tr);
     var td = el('td', 'c-tag', null, tr); tagStyle(el('span', 'tag', r.stage, td), r.stage);
-    el('td', 'c-cause', r.cause || '—', tr);
+    var cc = el('td', 'c-cause', r.cause || '—', tr);
+    if (r.gap < 1) el('span', 'muted', ' · stock in hand covered it, no output lost that day', cc);
+    el('span', 'num', N(r.gap), el('td', 'c-gap r', null, tr));
+    el('span', 'num', N(r.gap * S.cost_per_bcm), el('td', 'c-loss r', null, tr));
   });
 }
+
+/* ---------- Notes ---------- */
 function renderNotes() {
   var d = M.derived, ul = $('noteList'); ul.replaceChildren();
   ['Plan: ' + N(S.target_bcm_day) + ' BCM a day over ' + S.shifts_per_day + ' shifts of ' + S.shift_hours + ' hours. BCM = cubic metres of rock measured in the ground.',
@@ -255,29 +344,57 @@ function renderNotes() {
    'Drilling time lost with the reason "Blocked: blasted rock not cleared" is charged to loading and hauling, not drilling.',
    'Filling one tipper takes ' + d.passes + ' bucket passes, about ' + d.load_min.toFixed(1) + ' minutes. Swell factor ' + S.swell + ' and working efficiency ' + Math.round(S.efficiency * 100) + '% are used for loading capacity.',
    'Cost of lost output: ₹' + N(S.cost_per_bcm) + ' per BCM below the daily target. Change it on the Inputs page.',
-   'A stage counts as the defaulter on a day when its own loss is at least 5% of the daily plan. Over the whole period, a stage is "Contributing" when its own loss is at least 2% of plan.',
+   'A stage counts as the defaulter on a day when its own loss is at least 5% of that day\'s plan. Over the whole period, the stage with the largest own loss is the primary defaulter, and any other stage losing at least 2% of plan is contributing.',
+   'A day with only some shifts reported is compared with that part of the plan.',
    'All figures are made up for practice. They are not real MCL data.'].forEach(function (t) { el('li', null, t, ul); });
 }
+
+/* ---------- Putting it together ---------- */
 async function renderAll() {
   try {
     await load();
     $('err').style.display = 'none';
-    if (!renderTop(M)) return;
-    renderStages(M); renderHeat(M); renderCharts(M); renderDrivers(M); renderFilters(); renderTable(M); renderNotes();
+    var hasData = renderHero(M);
+    renderNotice();
+    document.querySelectorAll('main > section').forEach(function (s) { s.hidden = !hasData; });
+    if (!hasData) return;
+    renderKpis(M); renderLine(M); renderHeat(M); renderCharts(M); renderDrivers(M); renderFilters(M); renderTable(M); renderNotes();
+    var now = new Date();
+    $('updated').textContent = 'Worked out at ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + (Mine.Store.mode === 'database' ? ' · refreshes every minute' : '');
   } catch (e) { showError(e.message); }
 }
-function showError(msg) { var b = $('err'); b.style.display = 'block'; b.replaceChildren(el('strong', null, 'Sorry, the dashboard could not load. '), document.createTextNode('Please send this message to the team: '), el('code', null, msg)); $('take').textContent = 'The figures could not be worked out.'; }
+function showError(msg) {
+  var b = $('err'); b.style.display = 'block';
+  b.replaceChildren(el('strong', null, 'Sorry, the dashboard could not load. '), document.createTextNode('Please send this message to the team: '), el('code', null, msg));
+  $('verdict').textContent = 'The figures could not be worked out'; $('take').textContent = 'See the message below.';
+  document.querySelectorAll('.kpi.skeleton').forEach(function (k) { k.remove(); });
+}
+
+// Highlight the section in view in the section menu.
+if ('IntersectionObserver' in window) {
+  var links = {}; document.querySelectorAll('.secnav a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  var spy = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting && links[e.target.id]) { Object.keys(links).forEach(function (k) { links[k].removeAttribute('aria-current'); }); links[e.target.id].setAttribute('aria-current', 'true'); } });
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  Object.keys(links).forEach(function (id) { var s = $(id); if (s) spy.observe(s); });
+}
+
+// Print or save as PDF: open the notes and fit the charts to the page.
+var notesWasOpen = false;
+$('printBtn').addEventListener('click', function () { window.print(); });
+window.addEventListener('beforeprint', function () { notesWasOpen = $('notes').open; $('notes').open = true; $('planWarn').open = true; charts.forEach(function (c) { c.resize(); }); });
+window.addEventListener('afterprint', function () { $('notes').open = notesWasOpen; charts.forEach(function (c) { c.resize(); }); });
 
 renderAll();
 var w = window.innerWidth, t;
-window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (!M || !M.days.length) return; if ((w <= 640) !== (window.innerWidth <= 640) || (w < 560) !== (window.innerWidth < 560)) { w = window.innerWidth; renderHeat(M); renderCharts(M); renderTable(M); } }, 200); });
+window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (!M || !M.days.length) return; if ((w < 560) !== (window.innerWidth < 560)) { w = window.innerWidth; renderHeat(M); renderCharts(M); } }, 200); });
 window.addEventListener('storage', function () { renderAll(); });
 // Pick up reports other people saved: refresh every minute, and when the page is shown again.
 if (Mine.Store.mode === 'database') {
   setInterval(function () { if (!document.hidden) renderAll(); }, 60000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) renderAll(); });
 }
-if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (!M || !M.days.length) return; renderCharts(M); renderStages(M); renderTable(M); });
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (!M || !M.days.length) return; renderCharts(M); renderLine(M); renderTable(M); renderDrivers(M); });
 </script>
 </body>
 </html>

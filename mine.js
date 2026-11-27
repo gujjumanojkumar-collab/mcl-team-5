@@ -169,7 +169,8 @@ var Mine = (function () {
         if (k === d.blast_shift) rock += e.holes_blasted * d.bcm_per_hole;
         var worst = Math.max(e.drill_delay_min, e.blast_delay_min, e.load_delay_min);
         e.urgency = worst >= 120 ? 'High' : worst >= 30 ? 'Medium' : 'Low';
-        e.status = day < days - 3 ? 'Resolved' : (worst >= 30 ? 'In progress' : 'Resolved');
+        // Older delays are resolved; the most recent ones are still being followed up.
+        e.status = worst < 30 ? 'Resolved' : day >= days - 8 ? 'Open' : day >= days - 12 ? 'In progress' : 'Resolved';
         e.note = '';
         out.push(e);
       }
@@ -281,7 +282,9 @@ var Mine = (function () {
       [2, 'Loading time lost', 'minutes a day', 'load_delay', 'load_own'], [2, 'Shovels working', 'average', 'shovels', 'load_own'], [2, 'Tippers working', 'average', 'tippers', 'load_own'], [2, 'Tipper round trip', 'minutes', 'round_trip', 'load_own']];
     var drivers = n >= 5 ? dv.map(function (v) { return { si: v[0], name: v[1], unit: v[2], r: corr(days.map(function (x) { return x[v[3]]; }), days.map(function (x) { return x[v[4]]; })) }; })
       .filter(function (v) { return isFinite(v.r) && v.r !== 0; }).sort(function (a, b) { return Math.abs(b.r) - Math.abs(a.r); }) : [];
-    return { settings: s, derived: d, days: days, stages: stages, causes: causes, drivers: drivers, planTotal: planTotal, actual: actual, gap: Math.max(0, planTotal - actual) };
+    // closing_holes / closing_rock: work in hand between the stages after the last day.
+    return { settings: s, derived: d, days: days, stages: stages, causes: causes, drivers: drivers, planTotal: planTotal, actual: actual, gap: Math.max(0, planTotal - actual),
+      closing_holes: holes, closing_rock: rock };
   }
 
   /* ---------- CSV ---------- */

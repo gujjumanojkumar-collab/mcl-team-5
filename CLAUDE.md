@@ -117,3 +117,12 @@
   re-reads the table every minute. Mine settings are still kept per browser
   (only one table is allowed). Not tested against the real database.
   Next: Data Keeper runs 01-setup.sql and fills in config.js, then test.
+- UI refresh (Claude): dashboard opens with a verdict ("<stage> is the
+  primary defaulter") and a delivery gauge; key figures; stage cards with
+  buffer "tanks" (work in hand) between them; only real delay days in the
+  table; a Print or save as PDF button with a print layout. Inputs page now
+  has tabs (Add a shift report, Shift reports, Mine settings, Import and
+  export) and the shift form is laid out stage by stage with the planned
+  figure under each box. Fixed: hidden buttons showing (Cancel editing,
+  Remove all, Remove in database mode) and the page jumping down on load.
+  Next: real data in Supabase; decide who is responsible for each delay reason.

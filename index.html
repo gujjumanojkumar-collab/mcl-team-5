@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mine inputs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,46 +15,36 @@
   <nav class="menu" aria-label="Main menu"><a href="index.html" aria-current="page">Inputs</a><a href="dashboard.html">Dashboard</a></nav>
 </div></header>
 
-<div class="hero"><div class="wrap">
+<div class="hero hero-compact"><div class="wrap">
   <div class="eyebrow">Step 1 of 2 · Enter the data</div>
-  <h1>Mine inputs</h1>
-  <p class="lede">Change the plan and the equipment, or add what happened in each shift. The dashboard recalculates as soon as you save.</p>
-  <div class="btns"><a class="btn primary" href="dashboard.html">Open the dashboard →</a></div>
-  <div class="chips"><span class="chip" id="modeChip">Checking where reports are saved…</span><span class="chip sample">Use made-up figures only</span></div>
+  <div class="hero-row">
+    <div><h1>Mine inputs</h1><p class="lede">Add what happened in each shift, or change the plan. The dashboard updates as soon as you save.</p></div>
+    <a class="btn primary" href="dashboard.html">Open the dashboard →</a>
+  </div>
+  <div class="status-strip" id="source" aria-live="polite"><span class="dot"></span><span>Checking where reports are saved…</span></div>
 </div></div>
 
-<nav class="secnav" aria-label="Sections"><div class="wrap">
-  <a href="#settings">Mine settings</a><a href="#add">Add a shift report</a><a href="#reports">Shift reports</a><a href="#io">Import and export</a>
+<nav class="secnav" aria-label="Inputs sections"><div class="wrap" id="tabs">
+  <a href="#add" data-tab="add">Add a shift report</a>
+  <a href="#reports" data-tab="reports">Shift reports <span class="badge" id="reportCount">0</span></a>
+  <a href="#settings" data-tab="settings">Mine settings <span class="badge warn" id="checkCount" hidden>0</span></a>
+  <a href="#io" data-tab="io">Import and export</a>
 </div></nav>
 
 <main class="wrap">
   <div id="err" role="alert"></div>
-  <div class="source" id="source"></div>
 
-  <section id="settings">
-    <div class="head"><h2>Mine settings</h2><p class="sub">The plan and the machines. Changes save by themselves, and the plan check updates as you type.</p></div>
-    <div class="split">
-      <form class="panel" id="settingsForm" novalidate>
-        <div id="settingsFields"></div>
-        <div class="btns" style="margin-top:8px">
-          <button type="button" class="btn" id="resetBtn">Reset to the starting values</button>
-          <span class="confirm" id="resetConfirm">Reset all settings? <button type="button" class="btn small danger" id="resetYes">Yes, reset</button><button type="button" class="btn small" id="resetNo">Cancel</button></span>
-          <span class="status-line" id="settingsStatus" aria-live="polite"></span>
-        </div>
-      </form>
-      <aside class="panel sticky" aria-labelledby="checkTitle">
-        <h2 id="checkTitle" style="font-size:20px;margin-bottom:12px">Plan check</h2>
-        <ul class="checks" id="checks"></ul>
-        <dl class="facts" id="derived" style="margin-top:14px"></dl>
-      </aside>
-    </div>
-  </section>
-
-  <section id="add">
+  <section id="add" data-panel>
     <div class="head"><h2 id="formTitle">Add a shift report</h2><p class="sub">One report per shift. The boxes start with the planned figures, so change only what was different.</p></div>
-    <form class="panel" id="entryForm" novalidate>
-      <div id="entryFields"></div>
-      <div class="btns">
+    <form id="entryForm" class="entry" novalidate>
+      <div class="panel"><div class="fields-3" id="grp-Shift"></div></div>
+      <div class="stage-cols">
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s0)">1</span><div><h3>Drilling</h3><small>Contractor A</small></div></div><div class="pairs" id="grp-Drilling"></div></div>
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s1)">2</span><div><h3>Blasting</h3><small>Contractor B</small></div></div><p class="box-hint" id="blastHint"></p><div class="pairs" id="grp-Blasting"></div></div>
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s2)">3</span><div><h3>Loading and hauling</h3><small>Contractor C</small></div></div><div class="pairs" id="grp-Loading"></div></div>
+      </div>
+      <div class="panel"><h3 class="box-title">Follow-up</h3><div class="fields-3" id="grp-Follow"></div></div>
+      <div class="form-actions">
         <button type="submit" class="btn primary" id="saveEntry">Save shift report</button>
         <button type="button" class="btn" id="fillPlan">Fill with planned figures</button>
         <button type="button" class="btn" id="cancelEdit" hidden>Cancel editing</button>
@@ -63,36 +53,55 @@
     </form>
   </section>
 
-  <section id="reports">
-    <div class="head"><h2>Shift reports</h2><p class="sub" id="reportsSub"></p></div>
-    <div class="panel">
-      <div class="btns" style="margin-bottom:14px">
+  <section id="reports" data-panel hidden>
+    <div class="head head-row">
+      <div><h2>Shift reports</h2><p class="sub" id="reportsSub"></p></div>
+      <div class="btns">
         <button type="button" class="btn" id="sampleBtn">Load 30 days of made-up reports</button>
-        <button type="button" class="btn danger" id="clearBtn">Remove all reports</button>
-        <span class="confirm" id="clearConfirm"><span id="clearText">Remove all reports?</span> <button type="button" class="btn small danger" id="clearYes">Yes</button><button type="button" class="btn small" id="clearNo">Cancel</button></span>
+        <button type="button" class="btn danger" id="clearBtn" hidden>Remove all reports</button>
       </div>
-      <div class="entries entries-wrap"><table>
-        <thead><tr><th>Date</th><th>Shift</th><th>Location</th><th class="r">Holes drilled</th><th class="r">Holes blasted</th><th class="r">Rock moved</th><th>Main delay</th><th>Urgency</th><th>Status</th><th class="r">Actions</th></tr></thead>
+    </div>
+    <div class="confirm" id="clearConfirm" style="margin-bottom:12px"><span id="clearText">Remove all reports?</span> <button type="button" class="btn small danger" id="clearYes">Yes</button><button type="button" class="btn small" id="clearNo">Cancel</button></div>
+    <div class="panel">
+      <div class="filters" id="statusFilters" role="group" aria-label="Filter reports"></div>
+      <div class="entries"><table>
+        <thead><tr><th>Date and shift</th><th>Location</th><th class="r">Rock moved, BCM</th><th>Main delay</th><th>Follow-up</th><th class="r"><span class="sr-only">Actions</span></th></tr></thead>
         <tbody id="entryRows"></tbody>
       </table></div>
+      <p class="sub" id="moreNote"></p>
     </div>
   </section>
 
-  <section id="io">
-    <div class="head"><h2>Import and export</h2><p class="sub">Move reports in and out as a spreadsheet file (CSV). Later, a scheduled SAP report saved as CSV in the same layout can be imported here.</p></div>
-    <div class="panel">
-      <div class="btns">
-        <button type="button" class="btn" id="templateBtn">Download empty template</button>
-        <button type="button" class="btn" id="exportBtn">Download my reports</button>
-        <label class="btn primary" for="importFile" style="cursor:pointer">Import a CSV file</label>
-        <input type="file" id="importFile" accept=".csv,text/csv" hidden>
-      </div>
-      <p class="status-line" id="ioStatus" aria-live="polite" style="margin-top:10px"></p>
-      <p class="sub" style="margin-top:6px">Imported reports are added to yours. A report for the same date and shift replaces the old one.</p>
+  <section id="settings" data-panel hidden>
+    <div class="head"><h2>Mine settings</h2><p class="sub">The plan and the machines. Changes save by themselves, and the plan check updates as you type. Orange boxes differ from the starting values.</p></div>
+    <div class="split">
+      <form class="panel" id="settingsForm" novalidate>
+        <div id="settingsFields"></div>
+        <div class="btns">
+          <button type="button" class="btn" id="resetBtn">Reset to the starting values</button>
+          <span class="confirm" id="resetConfirm">Reset all settings? <button type="button" class="btn small danger" id="resetYes">Yes, reset</button><button type="button" class="btn small" id="resetNo">Cancel</button></span>
+          <span class="status-line" id="settingsStatus" aria-live="polite"></span>
+        </div>
+      </form>
+      <aside class="panel sticky" aria-labelledby="checkTitle">
+        <h2 id="checkTitle" style="font-size:22px;margin-bottom:12px">Plan check</h2>
+        <ul class="checks" id="checks"></ul>
+        <dl class="facts" id="derived" style="margin-top:16px"></dl>
+      </aside>
     </div>
   </section>
+
+  <section id="io" data-panel hidden>
+    <div class="head"><h2>Import and export</h2><p class="sub">Move reports in and out as a spreadsheet file (CSV). Later, a scheduled SAP report saved as CSV in the same layout can be imported here.</p></div>
+    <div class="io-grid">
+      <div class="panel io-card"><h3>Empty template</h3><p>A CSV file with the right column names and one example row. Fill it in with a spreadsheet program.</p><button type="button" class="btn" id="templateBtn">Download the template</button></div>
+      <div class="panel io-card"><h3>Your reports</h3><p>Every saved shift report as one CSV file, to keep a copy or to check in a spreadsheet.</p><button type="button" class="btn" id="exportBtn">Download my reports</button></div>
+      <div class="panel io-card"><h3>Import a file</h3><p>Adds the reports in a CSV file. A report for the same date and shift replaces the old one.</p><label class="btn primary" for="importFile" style="cursor:pointer">Choose a CSV file</label><input type="file" id="importFile" accept=".csv,text/csv" hidden></div>
+    </div>
+    <p class="status-line" id="ioStatus" aria-live="polite" style="margin-top:12px"></p>
+  </section>
 </main>
-<footer>MCL team tool · IIM Sambalpur MDP · made-up data only</footer>
+<footer><div class="wrap"><span>MCL team tool · IIM Sambalpur MDP · made-up data only</span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -100,9 +109,11 @@
 <script>
 var $ = function (id) { return document.getElementById(id); };
 function el(tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
-var Store = Mine.Store, S = Mine.loadSettings(), E = [], loaded = false, editing = null, pendingReplace = null, urgencyTouched = false;
+var Store = Mine.Store, S = Mine.loadSettings(), E = [], loaded = false, editing = null, pendingReplace = null, urgencyTouched = false, statusFilter = 'All';
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function dl(s) { var p = String(s).split('-'); return p.length === 3 ? p[2] + ' ' + MON[+p[1] - 1] + ' ' + p[0] : s; }
 
-function toast(msg) { var t = el('div', 'toast', msg, document.body); setTimeout(function () { t.remove(); }, 2600); }
+function toast(msg) { var t = el('div', 'toast', msg, document.body); t.setAttribute('role', 'status'); setTimeout(function () { t.remove(); }, 2800); }
 function showError(msg) { var b = $('err'); b.style.display = 'block'; b.replaceChildren(el('strong', null, 'Something went wrong. '), document.createTextNode('Please send this message to the team: '), el('code', null, msg)); }
 async function reload() {
   try { E = await Store.list(); loaded = true; $('err').style.display = 'none'; }
@@ -115,17 +126,30 @@ async function busy(btn, fn) {
   finally { if (btn) { btn.disabled = false; btn.textContent = old; } }
 }
 
-/* ---------- source box ---------- */
+/* ---------- tabs ---------- */
+var TABS = ['add', 'reports', 'settings', 'io'];
+function showTab(name, scroll) {
+  if (TABS.indexOf(name) < 0) name = 'add';
+  document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.id !== name; });
+  document.querySelectorAll('#tabs a').forEach(function (a) { if (a.dataset.tab === name) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+  if (location.hash && location.hash.slice(1) !== name || scroll) history.replaceState(null, '', '#' + name);
+  if (scroll) { var nav = document.querySelector('.secnav'); if (nav.getBoundingClientRect().top < 0 || window.scrollY > nav.offsetTop) window.scrollTo({ top: nav.offsetTop, behavior: 'smooth' }); }
+}
+document.querySelectorAll('#tabs a').forEach(function (a) { a.addEventListener('click', function (ev) { ev.preventDefault(); showTab(a.dataset.tab, true); }); });
+window.addEventListener('hashchange', function () { showTab(location.hash.slice(1)); });
+
+/* ---------- status strip ---------- */
 function renderSource() {
   var b = $('source'); b.replaceChildren();
-  var t = el('div', null, null, b);
   var db = Store.mode === 'database';
-  el('div', 'sub', db ? 'Connected to the team database. Everyone sees the same reports.' : 'Not connected to the database yet. Reports are saved in this browser only.', t).style.margin = '0';
-  el('strong', null, !loaded ? 'Loading reports…' : E.length ? 'The dashboard shows ' + E.length + ' shift report' + (E.length === 1 ? '' : 's') : 'The dashboard shows 30 days of made-up sample reports', t);
-  if (loaded && !E.length) el('span', 'sub', 'Add a report below, or load the made-up reports to edit them.', b);
-  if (!db && !Store.problem) el('span', 'sub', 'To share reports, fill in config.js and run database/01-setup.sql.', b);
-  $('modeChip').textContent = db ? 'Saved in the team database' : 'Saved in this browser only';
-  var a = el('a', 'btn', 'See the dashboard →', b); a.href = 'dashboard.html'; a.style.marginLeft = 'auto';
+  var head = el('div', 'strip-head', null, b);
+  el('span', 'dot' + (Store.problem ? ' bad' : db ? ' ok' : ''), null, head);
+  el('b', null, Store.problem ? 'Database problem' : db ? 'Connected to the team database' : 'Saved in this browser only', head);
+  var note = !loaded ? 'Loading reports…' : E.length ? 'The dashboard shows ' + E.length + ' shift report' + (E.length === 1 ? '' : 's') + '.' : 'The dashboard shows made-up sample reports until you add your own.';
+  if (!db && !Store.problem) note += ' To share reports with the team, fill in config.js and run database/01-setup.sql.';
+  if (db) note += ' Everyone with the link sees the same reports.';
+  el('span', 'strip-note', note, b);
+  $('reportCount').textContent = loaded ? E.length : '…';
 }
 
 /* ---------- settings ---------- */
@@ -135,7 +159,7 @@ function buildSettings() {
     var g = f[3];
     if (!groups[g]) {
       var parent = box;
-      if (g === 'Advanced') { adv = el('details', 'adv', null, box); el('summary', null, 'Advanced settings (fill factor, swell, efficiency, starting stock)', adv); parent = adv; }
+      if (g === 'Advanced') { adv = el('details', 'adv', null, box); el('summary', null, 'Advanced settings: fill factor, swell, efficiency and starting stock', adv); parent = adv; }
       var fs = el('fieldset', null, null, parent); if (g !== 'Advanced') el('legend', null, g, fs);
       groups[g] = el('div', 'fields', null, fs);
     }
@@ -159,7 +183,7 @@ function onSetting(ev) {
     if (!isFinite(n) || n <= 0) { $('settingsStatus').textContent = f[1] + ' must be a number above 0.'; $('settingsStatus').className = 'status-line bad'; return; }
     v = n;
   }
-  S[key] = v; renderChecks(); markChanged();
+  S[key] = v; renderChecks(); markChanged(); renderPlanHints();
   if (key === 'shifts_per_day') refreshShiftOptions();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function () {
@@ -171,11 +195,13 @@ function onSetting(ev) {
 function renderChecks() {
   var ul = $('checks'); ul.replaceChildren();
   try {
-    Mine.checks(S).forEach(function (c) { el('li', c.level, c.text, ul); });
-    var d = Mine.derive(S), dl = $('derived'); dl.replaceChildren();
+    var list = Mine.checks(S), issues = list.filter(function (c) { return c.level !== 'ok'; }).length;
+    list.forEach(function (c) { el('li', c.level, c.text, ul); });
+    $('checkCount').hidden = !issues; $('checkCount').textContent = issues;
+    var d = Mine.derive(S), dlist = $('derived'); dlist.replaceChildren();
     [['Plan per shift', Mine.N(S.target_bcm_day / S.shifts_per_day) + ' BCM'], ['Holes per shift', Mine.N(S.holes_plan_day / S.shifts_per_day)], ['Rock per hole', d.bcm_per_hole.toFixed(1) + ' BCM'],
      ['Filling one tipper', d.load_min.toFixed(1) + ' min'], ['Tipper loads needed', Mine.N(d.loads_needed) + ' a day'], ['Loading can move', Mine.N(d.cap_bcm_day) + ' BCM a day'],
-     ['Blast happens in', 'Shift ' + 'ABCDEF'[d.blast_shift]]].forEach(function (p) { el('dt', null, p[0], dl); el('dd', null, p[1], dl); });
+     ['Blast happens in', 'Shift ' + 'ABCDEF'[d.blast_shift]]].forEach(function (p) { el('dt', null, p[0], dlist); el('dd', null, p[1], dlist); });
   } catch (e) { el('li', 'bad', 'Could not check the plan: ' + e.message, ul); }
 }
 $('resetBtn').onclick = function () { $('resetConfirm').classList.add('show'); };
@@ -183,17 +209,20 @@ $('resetNo').onclick = function () { $('resetConfirm').classList.remove('show');
 $('resetYes').onclick = function () {
   S = JSON.parse(JSON.stringify(Mine.DEFAULTS)); Mine.saveSettings(S);
   Mine.SETTINGS_FIELDS.forEach(function (f) { $('set_' + f[0]).value = S[f[0]]; });
-  $('resetConfirm').classList.remove('show'); renderChecks(); markChanged(); fillPlan(); toast('Settings reset');
+  $('resetConfirm').classList.remove('show'); renderChecks(); markChanged(); refreshShiftOptions(); fillPlan(); toast('Settings reset');
 };
 
-/* ---------- entry form ---------- */
+/* ---------- shift report form ---------- */
 var SELECTS = { shift: null, drill: Mine.REASONS.drill, blast: Mine.REASONS.blast, load: Mine.REASONS.load, urgency: ['Low', 'Medium', 'High'], status: ['Open', 'In progress', 'Resolved'] };
+var BOX = { 'Shift': 'grp-Shift', 'Drilling': 'grp-Drilling', 'Blasting': 'grp-Blasting', 'Loading and hauling': 'grp-Loading', 'Follow-up': 'grp-Follow' };
+var LABELS = { drill_delay_min: 'Time lost (min)', drill_reason: 'Reason for the delay', blast_delay_min: 'Delay (min)', blast_reason: 'Reason for the delay',
+  round_trip_min: 'Round trip (min)', load_delay_min: 'Time lost (min)', load_reason: 'Reason for the delay' };
 function buildEntry() {
-  var box = $('entryFields'), groups = {};
   Mine.ENTRY_FIELDS.forEach(function (f) {
-    if (!groups[f[3]]) { var fs = el('fieldset', null, null, box); el('legend', null, f[3], fs); groups[f[3]] = el('div', 'fields', null, fs); }
-    var w = el('div', 'field', null, groups[f[3]]), id = 'en_' + f[0];
-    var lab = el('label', null, f[1], w); lab.htmlFor = id;
+    var box = $(BOX[f[3]]), w = el('div', 'field', null, box), id = 'en_' + f[0];
+    if (/_reason$/.test(f[0])) w.classList.add('wide');
+    if (f[0] === 'location' || f[0] === 'note') w.classList.add('wide-sm');
+    var lab = el('label', null, LABELS[f[0]] || f[1], w); lab.htmlFor = id;
     var inp;
     if (f[2] in SELECTS) {
       inp = el('select', null, null, w);
@@ -207,9 +236,25 @@ function buildEntry() {
     }
     inp.id = id; inp.name = f[0];
     if (f[0] === 'date' || f[0] === 'location') inp.required = true;
+    if (f[2] === 'number') { var h = el('span', 'plan', '', w); h.id = 'plan_' + f[0]; }
     if (f[0] === 'urgency') inp.addEventListener('change', function () { urgencyTouched = true; });
     if (/_delay_min$/.test(f[0])) inp.addEventListener('input', suggestUrgency);
+    if (f[0] === 'shift') inp.addEventListener('change', renderPlanHints);
   });
+}
+function renderPlanHints() {
+  var d = Mine.derive(S), N = Mine.N, per = S.shifts_per_day, blastLetter = 'ABCDEF'[d.blast_shift];
+  var isBlast = $('en_shift').value === blastLetter;
+  var h = {
+    holes_drilled: 'Plan ' + N(S.holes_plan_day / per) + ' a shift',
+    holes_blasted: isBlast ? 'Plan ' + N(S.holes_plan_day) + ' in this shift' : 'Plan 0: the blast is in shift ' + blastLetter,
+    explosive_issued_kg: isBlast ? 'Plan ' + N(S.explosive_plan_kg_day) + ' kg' : 'Plan 0 in this shift',
+    explosive_used_kg: 'Cannot be more than issued',
+    shovels_working: 'Out of ' + N(S.shovels_total), tippers_working: 'Out of ' + N(S.tippers_total),
+    round_trip_min: 'Usual ' + (Math.round(d.trip_min * 10) / 10) + ' min', bcm_moved: 'Plan ' + N(S.target_bcm_day / per) + ' a shift'
+  };
+  Mine.NUM_KEYS.forEach(function (k) { var e = $('plan_' + k); if (e) e.textContent = h[k] || ''; });
+  $('blastHint').textContent = 'One blast a day at ' + S.blast_time + ', in shift ' + blastLetter + '. In other shifts, leave the blast figures at 0.';
 }
 function suggestUrgency() {
   if (urgencyTouched) return;
@@ -226,9 +271,9 @@ function fillPlan() {
     holes_blasted: blast ? S.holes_plan_day : 0, explosive_issued_kg: blast ? S.explosive_plan_kg_day : 0, explosive_used_kg: blast ? S.explosive_plan_kg_day : 0, blast_delay_min: 0, blast_reason: 'None',
     shovels_working: S.shovels_total, tippers_working: S.tippers_total, round_trip_min: Math.round(d.trip_min * 10) / 10, bcm_moved: Math.round(S.target_bcm_day / S.shifts_per_day), load_delay_min: 0, load_reason: 'None',
     urgency: 'Low', status: 'Open', note: '' };
-  setForm(v); urgencyTouched = false;
+  setForm(v); urgencyTouched = false; renderPlanHints();
 }
-function setForm(v) { Mine.ENTRY_FIELDS.forEach(function (f) { var i = $('en_' + f[0]); if (v[f[0]] !== undefined) i.value = v[f[0]]; }); }
+function setForm(v) { Mine.ENTRY_FIELDS.forEach(function (f) { var i = $('en_' + f[0]); if (v[f[0]] !== undefined) i.value = v[f[0]]; }); renderPlanHints(); }
 function readForm() { var v = {}; Mine.ENTRY_FIELDS.forEach(function (f) { var x = $('en_' + f[0]).value; v[f[0]] = f[2] === 'number' ? (x === '' ? 0 : +x) : x.trim(); }); return v; }
 function setEditing(id) {
   editing = id; pendingReplace = null;
@@ -246,8 +291,8 @@ $('entryForm').addEventListener('submit', function (ev) {
   if (neg.length) { st.textContent = 'Numbers cannot be negative or blank. Check: ' + neg.join(', ').replace(/_/g, ' ') + '.'; return; }
   if (v.explosive_used_kg > v.explosive_issued_kg) { st.textContent = 'Explosive used cannot be more than explosive issued.'; $('en_explosive_used_kg').focus(); return; }
   var clash = E.filter(function (e) { return e.date === v.date && e.shift === v.shift && e.id !== editing; })[0];
-  if (clash && editing) { st.textContent = 'Another report already has ' + v.date + ', shift ' + v.shift + '. Edit that report instead, or pick another date or shift.'; return; }
-  if (clash && pendingReplace !== clash.id) { pendingReplace = clash.id; st.className = 'status-line'; st.textContent = 'There is already a report for ' + v.date + ', shift ' + v.shift + '. Press save again to replace it.'; return; }
+  if (clash && editing) { st.textContent = 'Another report already has ' + dl(v.date) + ', shift ' + v.shift + '. Edit that report instead, or pick another date or shift.'; return; }
+  if (clash && pendingReplace !== clash.id) { pendingReplace = clash.id; st.className = 'status-line'; st.textContent = 'There is already a report for ' + dl(v.date) + ', shift ' + v.shift + '. Press save again to replace it.'; return; }
   var wasEditing = editing;
   busy($('saveEntry'), async function () {
     if (wasEditing && !clash) await Store.update(wasEditing, v);
@@ -267,30 +312,56 @@ function refreshShiftOptions() {
   if (cur) sel.value = cur; if (!sel.value) sel.selectedIndex = 0;
 }
 
-/* ---------- reports table ---------- */
+/* ---------- reports list ---------- */
 function mainDelay(e) {
   var c = [[+e.drill_delay_min || 0, e.drill_reason], [+e.blast_delay_min || 0, e.blast_reason], [+e.load_delay_min || 0, e.load_reason]].filter(function (x) { return x[1] && x[1] !== 'None'; }).sort(function (a, b) { return b[0] - a[0]; })[0];
-  return c ? c[1] + (c[0] ? ' (' + c[0] + ' min)' : '') : '—';
+  return c ? c[1] + (c[0] ? ' (' + c[0] + ' min)' : '') : '';
 }
+var STATUS_TAG = { 'Open': 's-open', 'In progress': 's-progress', 'Resolved': 's-resolved' };
+function matches(e, f) { return f === 'All' || (f === 'High urgency' ? e.urgency === 'High' && e.status !== 'Resolved' : e.status === f); }
 function renderRows() {
   var tb = $('entryRows'); tb.replaceChildren();
-  var rows = E.slice().sort(function (a, b) { return (b.date + b.shift).localeCompare(a.date + a.shift); });
-  $('reportsSub').textContent = rows.length ? rows.length + ' report' + (rows.length === 1 ? '' : 's') + ', newest first. Showing up to 60.' : 'No reports yet. Add one above, load the made-up reports, or import a CSV file.';
-  $('clearBtn').hidden = !rows.length || !Store.canRemove;
-  $('sampleBtn').hidden = Store.mode === 'database' && rows.length > 0;
+  var all = E.slice().sort(function (a, b) { return (b.date + b.shift).localeCompare(a.date + a.shift); });
+  $('clearBtn').hidden = !all.length || !Store.canRemove;
+  $('sampleBtn').hidden = Store.mode === 'database' && all.length > 0;
+  $('reportsSub').textContent = !loaded ? 'Loading…' : all.length ? 'Newest first. Edit a report to change its figures or mark it resolved.' : 'No reports yet.';
+  var fbox = $('statusFilters'); fbox.replaceChildren(); fbox.hidden = !all.length;
+  ['All', 'Open', 'In progress', 'Resolved', 'High urgency'].forEach(function (x) {
+    var n = all.filter(function (e) { return matches(e, x); }).length;
+    var b = el('button', null, x + ' ', fbox); el('span', 'count', String(n), b);
+    b.type = 'button'; b.setAttribute('aria-pressed', x === statusFilter ? 'true' : 'false');
+    b.onclick = function () { statusFilter = x; renderRows(); };
+  });
+  $('moreNote').textContent = '';
+  if (!all.length) {
+    var tr = el('tr', 'empty-row', null, tb), td = el('td', null, null, tr); td.colSpan = 6;
+    var es = el('div', 'empty-state', null, td); el('strong', null, loaded ? 'No shift reports yet' : 'Loading reports…', es);
+    if (loaded) {
+      el('span', null, 'Add your first report, or load 30 days of made-up reports to try the dashboard.', es);
+      var bs = el('div', 'btns', null, es), a = el('button', 'btn primary', 'Add a shift report', bs); a.type = 'button'; a.onclick = function () { showTab('add', true); };
+      var s2 = el('button', 'btn', 'Load made-up reports', bs); s2.type = 'button'; s2.onclick = function () { $('sampleBtn').click(); };
+    }
+    return;
+  }
+  var rows = all.filter(function (e) { return matches(e, statusFilter); });
+  if (!rows.length) { var r0 = el('tr', 'empty-row', null, tb), c0 = el('td', 'empty', 'No reports match this filter.', r0); c0.colSpan = 6; return; }
   rows.slice(0, 60).forEach(function (e) {
     var tr = el('tr', null, null, tb);
-    el('td', null, e.date, tr); el('td', null, e.shift, tr); el('td', null, e.location || '—', tr);
-    el('td', 'r num', Mine.N(Mine.num(e.holes_drilled)), tr); el('td', 'r num', Mine.N(Mine.num(e.holes_blasted)), tr); el('td', 'r num', Mine.N(Mine.num(e.bcm_moved)), tr);
-    el('td', null, mainDelay(e), tr); el('td', 'u-' + e.urgency, e.urgency, tr); el('td', null, e.status, tr);
-    var act = el('td', 'act', null, tr), ed = el('button', 'btn small', 'Edit', act), rm = el('button', 'btn small danger', 'Remove', act);
-    ed.type = rm.type = 'button'; act.style.whiteSpace = 'nowrap'; rm.style.marginLeft = '6px'; rm.hidden = !Store.canRemove;
-    ed.onclick = function () { setEditing(e.id); setForm(e); urgencyTouched = true; $('add').scrollIntoView(); };
+    el('td', 'e-date', dl(e.date) + ' · Shift ' + e.shift, tr); el('td', 'e-loc', e.location || '—', tr);
+    el('span', 'num', Mine.N(Mine.num(e.bcm_moved)), el('td', 'r e-moved', null, tr));
+    var md = mainDelay(e), dc = el('td', 'e-delay', md || 'No delay', tr); if (!md) dc.classList.add('muted');
+    var fu = el('td', 'e-follow', null, tr);
+    el('span', 'tag u-' + e.urgency, e.urgency + ' urgency', fu); el('span', 'tag ' + (STATUS_TAG[e.status] || 's-open'), e.status, fu);
+    var act = el('td', 'e-act', null, tr), ed = el('button', 'btn small', 'Edit', act), rm = el('button', 'btn small danger', 'Remove', act);
+    ed.type = rm.type = 'button'; rm.hidden = !Store.canRemove;
+    ed.setAttribute('aria-label', 'Edit report for ' + dl(e.date) + ', shift ' + e.shift);
+    ed.onclick = function () { setEditing(e.id); setForm(e); urgencyTouched = true; showTab('add', true); };
     rm.onclick = function () {
       if (rm.dataset.armed) { busy(null, function () { return Store.remove([e.id]); }).then(function (ok) { if (!ok) return; if (editing === e.id) setEditing(null); toast('Report removed'); reload(); }); return; }
       rm.dataset.armed = '1'; rm.textContent = 'Confirm'; setTimeout(function () { if (rm.isConnected) { delete rm.dataset.armed; rm.textContent = 'Remove'; } }, 4000);
     };
   });
+  if (rows.length > 60) $('moreNote').textContent = 'Showing the newest 60 of ' + rows.length + '. Download your reports to see them all.';
 }
 $('sampleBtn').onclick = function () {
   if (E.length) { $('clearText').textContent = 'Replace your ' + E.length + ' reports with the made-up ones?'; $('clearConfirm').dataset.mode = 'sample'; $('clearConfirm').classList.add('show'); return; }
@@ -314,14 +385,15 @@ function download(name, text) {
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+function ioStatus(msg, cls) { $('ioStatus').textContent = msg; $('ioStatus').className = 'status-line' + (cls ? ' ' + cls : ''); }
 $('templateBtn').onclick = function () {
   var s = Mine.sample(S, 1).slice(0, 1).map(function (e) { e.location = 'East pit, Bench 3'; return e; });
   download('shift-report-template.csv', Mine.toCSV(s));
-  $('ioStatus').textContent = 'Template downloaded. It holds one example row; replace it with your own.'; $('ioStatus').className = 'status-line ok';
+  ioStatus('Template downloaded. It holds one example row; replace it with your own.', 'ok');
 };
 $('exportBtn').onclick = function () {
-  if (!E.length) { $('ioStatus').textContent = 'There are no reports to download yet.'; $('ioStatus').className = 'status-line bad'; return; }
-  download('shift-reports.csv', Mine.toCSV(E)); $('ioStatus').textContent = E.length + ' reports downloaded.'; $('ioStatus').className = 'status-line ok';
+  if (!E.length) { ioStatus('There are no reports to download yet.', 'bad'); return; }
+  download('shift-reports.csv', Mine.toCSV(E)); ioStatus(E.length + ' reports downloaded.', 'ok');
 };
 $('importFile').onchange = function (ev) {
   var file = ev.target.files[0]; if (!file) return;
@@ -332,22 +404,22 @@ $('importFile').onchange = function (ev) {
       if (!res.entries.length) throw new Error('No rows could be read. Each row needs a date (YYYY-MM-DD) and a shift.');
       var keys = {}; res.entries.forEach(function (e) { keys[e.date + '|' + e.shift] = 1; });
       var replaced = E.filter(function (e) { return keys[e.date + '|' + e.shift]; }).length;
-      $('ioStatus').textContent = 'Importing…'; $('ioStatus').className = 'status-line';
+      ioStatus('Importing…');
       await Store.upsert(res.entries); await reload();
-      $('ioStatus').textContent = 'Imported ' + res.entries.length + ' reports' + (replaced ? ', replacing ' + replaced : '') + (res.skipped ? '. Skipped ' + res.skipped + ' rows without a valid date or shift' : '') + '.';
-      $('ioStatus').className = 'status-line ok';
-    } catch (e) { $('ioStatus').textContent = 'Import failed: ' + e.message; $('ioStatus').className = 'status-line bad'; }
+      ioStatus('Imported ' + res.entries.length + ' reports' + (replaced ? ', replacing ' + replaced : '') + (res.skipped ? '. Skipped ' + res.skipped + ' rows without a valid date or shift' : '') + '.', 'ok');
+    } catch (e) { ioStatus('Import failed: ' + e.message, 'bad'); }
     ev.target.value = '';
   };
-  r.onerror = function () { $('ioStatus').textContent = 'Import failed: the file could not be read.'; $('ioStatus').className = 'status-line bad'; };
+  r.onerror = function () { ioStatus('Import failed: the file could not be read.', 'bad'); };
   r.readAsText(file);
 };
 
 function renderAll() { renderSource(); renderRows(); }
 try {
+  showTab(location.hash.slice(1));
   buildSettings(); renderChecks(); buildEntry(); $('en_date').value = today(); fillPlan(); renderAll();
   if (Store.problem) showError(Store.problem);
-  reload().then(fillPlan);
+  reload().then(function () { if (!editing) fillPlan(); });
   $('en_date').addEventListener('change', function () { if (!editing) { var d = $('en_date').value; fillPlan(); $('en_date').value = d; } });
 } catch (e) { showError(e.message); }
 </script>
