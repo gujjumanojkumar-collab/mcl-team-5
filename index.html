@@ -20,7 +20,7 @@
   <h1>Mine inputs</h1>
   <p class="lede">Change the plan and the equipment, or add what happened in each shift. The dashboard recalculates as soon as you save.</p>
   <div class="btns"><a class="btn primary" href="dashboard.html">Open the dashboard →</a></div>
-  <div class="chips"><span class="chip">Saved in this browser only</span><span class="chip sample">Use made-up figures only</span></div>
+  <div class="chips"><span class="chip" id="modeChip">Checking where reports are saved…</span><span class="chip sample">Use made-up figures only</span></div>
 </div></div>
 
 <nav class="secnav" aria-label="Sections"><div class="wrap">
@@ -94,23 +94,37 @@
 </main>
 <footer>MCL team tool · IIM Sambalpur MDP · made-up data only</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="mine.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
 function el(tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
-var S = Mine.loadSettings(), E = Mine.loadEntries(), editing = null, pendingReplace = null, urgencyTouched = false;
+var Store = Mine.Store, S = Mine.loadSettings(), E = [], loaded = false, editing = null, pendingReplace = null, urgencyTouched = false;
 
 function toast(msg) { var t = el('div', 'toast', msg, document.body); setTimeout(function () { t.remove(); }, 2600); }
 function showError(msg) { var b = $('err'); b.style.display = 'block'; b.replaceChildren(el('strong', null, 'Something went wrong. '), document.createTextNode('Please send this message to the team: '), el('code', null, msg)); }
-function persist() { if (!Mine.saveEntries(E)) { showError('This browser would not save the reports (storage is blocked or full).'); return false; } return true; }
+async function reload() {
+  try { E = await Store.list(); loaded = true; $('err').style.display = 'none'; }
+  catch (e) { showError('Could not read the shift reports: ' + e.message); }
+  renderAll();
+}
+async function busy(btn, fn) {
+  var old = btn ? btn.textContent : ''; if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try { await fn(); return true; } catch (e) { showError(e.message); return false; }
+  finally { if (btn) { btn.disabled = false; btn.textContent = old; } }
+}
 
 /* ---------- source box ---------- */
 function renderSource() {
   var b = $('source'); b.replaceChildren();
   var t = el('div', null, null, b);
-  el('div', 'sub', 'The dashboard is now showing', t).style.margin = '0';
-  el('strong', null, E.length ? 'Your ' + E.length + ' shift report' + (E.length === 1 ? '' : 's') : '30 days of made-up sample reports', t);
-  if (!E.length) el('span', 'sub', 'Add a report below, or load the sample reports to edit them.', b);
+  var db = Store.mode === 'database';
+  el('div', 'sub', db ? 'Connected to the team database. Everyone sees the same reports.' : 'Not connected to the database yet. Reports are saved in this browser only.', t).style.margin = '0';
+  el('strong', null, !loaded ? 'Loading reports…' : E.length ? 'The dashboard shows ' + E.length + ' shift report' + (E.length === 1 ? '' : 's') : 'The dashboard shows 30 days of made-up sample reports', t);
+  if (loaded && !E.length) el('span', 'sub', 'Add a report below, or load the made-up reports to edit them.', b);
+  if (!db && !Store.problem) el('span', 'sub', 'To share reports, fill in config.js and run database/01-setup.sql.', b);
+  $('modeChip').textContent = db ? 'Saved in the team database' : 'Saved in this browser only';
   var a = el('a', 'btn', 'See the dashboard →', b); a.href = 'dashboard.html'; a.style.marginLeft = 'auto';
 }
 
@@ -232,13 +246,18 @@ $('entryForm').addEventListener('submit', function (ev) {
   if (neg.length) { st.textContent = 'Numbers cannot be negative or blank. Check: ' + neg.join(', ').replace(/_/g, ' ') + '.'; return; }
   if (v.explosive_used_kg > v.explosive_issued_kg) { st.textContent = 'Explosive used cannot be more than explosive issued.'; $('en_explosive_used_kg').focus(); return; }
   var clash = E.filter(function (e) { return e.date === v.date && e.shift === v.shift && e.id !== editing; })[0];
+  if (clash && editing) { st.textContent = 'Another report already has ' + v.date + ', shift ' + v.shift + '. Edit that report instead, or pick another date or shift.'; return; }
   if (clash && pendingReplace !== clash.id) { pendingReplace = clash.id; st.className = 'status-line'; st.textContent = 'There is already a report for ' + v.date + ', shift ' + v.shift + '. Press save again to replace it.'; return; }
-  if (clash) E = E.filter(function (e) { return e.id !== clash.id; });
-  if (editing) { v.id = editing; E = E.map(function (e) { return e.id === editing ? v : e; }); }
-  else { v.id = Mine.newId(); E.push(v); }
-  if (!persist()) return;
-  toast(editing ? 'Changes saved. The dashboard is updated.' : 'Shift report saved. The dashboard is updated.');
-  setEditing(null); renderAll(); fillPlan();
+  var wasEditing = editing;
+  busy($('saveEntry'), async function () {
+    if (wasEditing && !clash) await Store.update(wasEditing, v);
+    else await Store.upsert([v]);
+  }).then(async function (ok) {
+    if (!ok) { st.textContent = 'Not saved. See the message at the top of the page.'; return; }
+    st.textContent = '';
+    toast(wasEditing ? 'Changes saved. The dashboard is updated.' : 'Shift report saved. The dashboard is updated.');
+    setEditing(null); await reload(); fillPlan();
+  });
 });
 $('fillPlan').onclick = fillPlan;
 $('cancelEdit').onclick = function () { setEditing(null); fillPlan(); };
@@ -257,17 +276,18 @@ function renderRows() {
   var tb = $('entryRows'); tb.replaceChildren();
   var rows = E.slice().sort(function (a, b) { return (b.date + b.shift).localeCompare(a.date + a.shift); });
   $('reportsSub').textContent = rows.length ? rows.length + ' report' + (rows.length === 1 ? '' : 's') + ', newest first. Showing up to 60.' : 'No reports yet. Add one above, load the made-up reports, or import a CSV file.';
-  $('clearBtn').hidden = !rows.length;
+  $('clearBtn').hidden = !rows.length || !Store.canRemove;
+  $('sampleBtn').hidden = Store.mode === 'database' && rows.length > 0;
   rows.slice(0, 60).forEach(function (e) {
     var tr = el('tr', null, null, tb);
     el('td', null, e.date, tr); el('td', null, e.shift, tr); el('td', null, e.location || '—', tr);
     el('td', 'r num', Mine.N(Mine.num(e.holes_drilled)), tr); el('td', 'r num', Mine.N(Mine.num(e.holes_blasted)), tr); el('td', 'r num', Mine.N(Mine.num(e.bcm_moved)), tr);
     el('td', null, mainDelay(e), tr); el('td', 'u-' + e.urgency, e.urgency, tr); el('td', null, e.status, tr);
     var act = el('td', 'act', null, tr), ed = el('button', 'btn small', 'Edit', act), rm = el('button', 'btn small danger', 'Remove', act);
-    ed.type = rm.type = 'button'; act.style.whiteSpace = 'nowrap'; rm.style.marginLeft = '6px';
+    ed.type = rm.type = 'button'; act.style.whiteSpace = 'nowrap'; rm.style.marginLeft = '6px'; rm.hidden = !Store.canRemove;
     ed.onclick = function () { setEditing(e.id); setForm(e); urgencyTouched = true; $('add').scrollIntoView(); };
     rm.onclick = function () {
-      if (rm.dataset.armed) { E = E.filter(function (x) { return x.id !== e.id; }); persist(); if (editing === e.id) setEditing(null); renderAll(); toast('Report removed'); return; }
+      if (rm.dataset.armed) { busy(null, function () { return Store.remove([e.id]); }).then(function (ok) { if (!ok) return; if (editing === e.id) setEditing(null); toast('Report removed'); reload(); }); return; }
       rm.dataset.armed = '1'; rm.textContent = 'Confirm'; setTimeout(function () { if (rm.isConnected) { delete rm.dataset.armed; rm.textContent = 'Remove'; } }, 4000);
     };
   });
@@ -276,13 +296,16 @@ $('sampleBtn').onclick = function () {
   if (E.length) { $('clearText').textContent = 'Replace your ' + E.length + ' reports with the made-up ones?'; $('clearConfirm').dataset.mode = 'sample'; $('clearConfirm').classList.add('show'); return; }
   loadSample();
 };
-function loadSample() { E = Mine.sample(S); persist(); renderAll(); fillPlan(); toast('30 days of made-up reports loaded. Edit any of them.'); }
+function loadSample() {
+  busy($('sampleBtn'), async function () { if (Store.canRemove && E.length) await Store.remove(E.map(function (e) { return e.id; })); await Store.upsert(Mine.sample(S)); })
+    .then(async function (ok) { if (!ok) return; await reload(); fillPlan(); toast('30 days of made-up reports loaded. Edit any of them.'); });
+}
 $('clearBtn').onclick = function () { $('clearText').textContent = 'Remove all ' + E.length + ' reports?'; $('clearConfirm').dataset.mode = 'clear'; $('clearConfirm').classList.add('show'); };
 $('clearNo').onclick = function () { $('clearConfirm').classList.remove('show'); };
 $('clearYes').onclick = function () {
   $('clearConfirm').classList.remove('show');
   if ($('clearConfirm').dataset.mode === 'sample') { loadSample(); return; }
-  E = []; persist(); setEditing(null); renderAll(); fillPlan(); toast('All reports removed. The dashboard shows the sample again.');
+  busy(null, function () { return Store.remove(E.map(function (e) { return e.id; })); }).then(async function (ok) { if (!ok) return; setEditing(null); await reload(); fillPlan(); toast('All reports removed. The dashboard shows the sample again.'); });
 };
 
 /* ---------- import and export ---------- */
@@ -303,14 +326,14 @@ $('exportBtn').onclick = function () {
 $('importFile').onchange = function (ev) {
   var file = ev.target.files[0]; if (!file) return;
   var r = new FileReader();
-  r.onload = function () {
+  r.onload = async function () {
     try {
       var res = Mine.parseCSV(r.result);
       if (!res.entries.length) throw new Error('No rows could be read. Each row needs a date (YYYY-MM-DD) and a shift.');
       var keys = {}; res.entries.forEach(function (e) { keys[e.date + '|' + e.shift] = 1; });
       var replaced = E.filter(function (e) { return keys[e.date + '|' + e.shift]; }).length;
-      E = E.filter(function (e) { return !keys[e.date + '|' + e.shift]; }).concat(res.entries);
-      persist(); renderAll();
+      $('ioStatus').textContent = 'Importing…'; $('ioStatus').className = 'status-line';
+      await Store.upsert(res.entries); await reload();
       $('ioStatus').textContent = 'Imported ' + res.entries.length + ' reports' + (replaced ? ', replacing ' + replaced : '') + (res.skipped ? '. Skipped ' + res.skipped + ' rows without a valid date or shift' : '') + '.';
       $('ioStatus').className = 'status-line ok';
     } catch (e) { $('ioStatus').textContent = 'Import failed: ' + e.message; $('ioStatus').className = 'status-line bad'; }
@@ -323,6 +346,8 @@ $('importFile').onchange = function (ev) {
 function renderAll() { renderSource(); renderRows(); }
 try {
   buildSettings(); renderChecks(); buildEntry(); $('en_date').value = today(); fillPlan(); renderAll();
+  if (Store.problem) showError(Store.problem);
+  reload().then(fillPlan);
   $('en_date').addEventListener('change', function () { if (!editing) { var d = $('en_date').value; fillPlan(); $('en_date').value = d; } });
 } catch (e) { showError(e.message); }
 </script>
