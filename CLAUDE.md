@@ -81,3 +81,11 @@
 ## Progress Log (newest entry at the bottom)
 - Phase 0 (starter): placeholder index.html, config.js without settings and
   this CLAUDE.md. Next: Phase 1 - the table and the entry page.
+- Delay dashboard (added by Claude, not a numbered phase): dashboard.html shows
+  a mine production delay monitor (drilling, blasting, loading and hauling).
+  It reads made-up shift data from shifts.json (made by
+  tools/make_sample_data.py). No database is used. Works: charts, stage cards,
+  worst-shifts table, phone layout. Known problems: index.html is still the
+  placeholder and has no link to the dashboard; the numbers are made up and
+  the tipper load, shovel count and Rs 150 per BCM cost are guesses. Next:
+  replace shifts.json with real shift reports, or connect it to the database.

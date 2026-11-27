@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mine production delay monitor</title>
+<style>
+:root{--fg:#1f2937;--muted:#6b7280;--bg:#fff;--panel:#f9fafb;--line:#e5e7eb;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--c0:#2563eb;--c1:#7c3aed;--c2:#0d9488}
+@media(prefers-color-scheme:dark){:root{--fg:#e5e7eb;--muted:#9ca3af;--bg:#111827;--panel:#1f2937;--line:#374151;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--c0:#60a5fa;--c1:#a78bfa;--c2:#2dd4bf}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--fg);background:var(--bg);line-height:1.5}
+header.top{background:#c2410c;color:#fff;padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+header.top a{color:#fff;font-weight:bold;text-decoration:none;padding:8px 14px;border:1px solid #fff;border-radius:8px}
+header.top strong{font-size:18px}
+main{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:28px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:0 0 8px}h3{margin:0;font-size:17px}
+p{margin:0}.muted{color:var(--muted);font-size:14px}
+.banner{border:2px dashed var(--warn);border-radius:10px;padding:10px 14px;font-size:14px}
+.take{font-size:18px;margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.big{font-size:28px;font-weight:bold;overflow-wrap:anywhere}
+.chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}
+.arrow{align-self:center;font-size:22px;color:var(--muted)}
+@media(max-width:760px){.chain{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
+.pill{align-self:flex-start;border:1px solid currentColor;border-radius:99px;padding:2px 10px;font-size:14px;font-weight:bold}
+.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}.pill.ok{color:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin-bottom:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+svg{display:block;width:100%;height:auto}svg text{fill:var(--muted);font-size:11px}
+.info{min-height:24px;font-size:14px;margin-top:6px;font-weight:bold}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.row{display:grid;grid-template-columns:minmax(110px,40%) 1fr auto;gap:8px;align-items:center;margin-bottom:8px;font-size:14px}
+.track{background:var(--line);height:10px;border-radius:3px}.fill{height:100%;border-radius:3px}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted)}
+details{font-size:14px}summary{cursor:pointer;font-weight:bold;padding:8px 0}li{margin-bottom:6px}
+#err{display:none;border:2px solid var(--bad);border-radius:10px;padding:12px}
+</style>
+</head>
+<body>
+<header class="top"><strong>MCL team tool</strong><nav><a href="index.html">Home</a> <a href="dashboard.html">Dashboard</a></nav></header>
+<main>
+<div id="err"></div>
+<header>
+<h1>Mine production delay monitor</h1>
+<p class="muted">Open-cast mine with three contractors working one after another: drilling, then blasting, then loading and hauling. Plan: 30,000 BCM a day over 3 shifts of 8 hours. (BCM = cubic metres of rock measured in the ground.)</p>
+<p class="banner" style="margin-top:10px">All data here is made up. It was created by a script, with a drill breakdown, rain, an explosive delivery delay and shovel breakdowns built in. Replace it with real shift reports before relying on any number.</p>
+<p class="take" id="take">Loading...</p>
+</header>
+<section class="grid" id="kpis"></section>
+<section><h2>Where the delay sits</h2>
+<p class="muted" style="margin-bottom:10px"><b>Own loss</b> is output a contractor's own machines, supply or clearance could not deliver. <b>Starved</b> is output lost because the stage before it ran out of work. Starved loss is not counted against that contractor.</p>
+<div class="chain" id="chain"></div></section>
+<section><h2>Day by day: which stage fell short</h2>
+<div class="legend"><span><i class="sw" style="background:var(--ok)"></i>95% of plan or more</span><span><i class="sw" style="background:var(--warn)"></i>80 to 95%</span><span><i class="sw" style="background:var(--bad)"></i>Below 80%</span><span><i class="sw" style="border:2px solid var(--fg)"></i>Delay started here</span></div>
+<div id="heat"></div><div class="info" id="heatinfo">Tap a box to see its day.</div>
+<p class="muted">A box with a border is where the delay started. A red box without a border was starved by the stage before it, often days after the real cause.</p></section>
+<section><h2>Work in hand between stages</h2>
+<p class="muted" style="margin-bottom:8px">Drilled holes waiting to be blasted, and blasted rock waiting to be loaded, counted in shifts of work. When a line falls below 1, the next stage will soon stand idle.</p>
+<div id="cover"></div></section>
+<section class="two"><div><h2>Causes, biggest first</h2><div id="causes"></div></div>
+<div><h2>What moves with the delay</h2><p class="muted" style="margin-bottom:8px">r shows how closely a variable moves with the stage's own loss. 1 means very closely. The minus sign means loss rises when the variable falls.</p><div id="drivers"></div></div></section>
+<section><h2>Worst shifts</h2><div class="scroll"><table><thead><tr><th>Date</th><th>Shift</th><th>Gap, BCM</th><th>Loss, Rs</th><th>Where it started</th><th>Cause</th></tr></thead><tbody id="worst"></tbody></table></div></section>
+<details><summary>Plan arithmetic and assumptions</summary><ul>
+<li>30,000 BCM a day with 60 t of explosive is 2 kg per BCM, which matches the powder factor of 2. 1,200 holes a day gives 25 BCM and 50 kg of explosive per hole. Each shift plans 400 holes, 20,000 kg and 10,000 BCM.</li>
+<li>Assumed, not given: tipper load 10 m3 loose, swell factor 1.3, 85% working efficiency, 16 shovels. The 5 minute cycle is read as shovel time per tipper loaded. With 5 tippers a shovel keeps working only while a tipper round trip is 25 minutes or less.</li>
+<li>Cost of delay is assumed at Rs 150 per BCM not delivered. Change RATE in this file to your own figure.</li>
+<li>Broken rock from one shift is available to loading in the next shift. The same holds for drilled holes and blasting.</li></ul></details>
+</main>
+<script>
+var PLAN=10000, PH=400, KG=50, M3H=25, MIN=480, TIP=5, LOADMIN=5, PAY=10, SWELL=1.3, EFF=0.85, RATE=150, TOL=0.05, PKG=20000;
+var STAGES=['Drilling','Blasting','Loading & hauling'], COL=['var(--c0)','var(--c1)','var(--c2)'];
+var CON=['Contractor A','Contractor B','Contractor C'], K=['drill','blast','load'];
+var $=function(id){return document.getElementById(id)};
+var N=function(v){return Math.round(v).toLocaleString('en-IN')};
+function el(tag,cls,text,parent){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
+function sum(a,f){return a.reduce(function(s,r){return s+f(r)},0)}
+function corr(x,y){var n=x.length,mx=sum(x,function(v){return v})/n,my=sum(y,function(v){return v})/n,a=0,b=0,c=0;for(var i=0;i<n;i++){a+=(x[i]-mx)*(y[i]-my);b+=Math.pow(x[i]-mx,2);c+=Math.pow(y[i]-my,2)}return b&&c?a/Math.sqrt(b*c):0}
+
+function enrich(r){
+ var d={};
+ d.drill_loss=Math.max(0,PH-r.holes_drilled)*M3H;
+ var ownCap=Math.min(PH,Math.floor(r.explosive_issued_kg/KG),Math.floor(PH*(1-r.blast_delay_min/MIN)));
+ d.blast_loss=(PH-ownCap)*M3H; d.blast_starved=Math.max(0,ownCap-r.holes_blasted)*M3H;
+ var cap=r.shovels_working*MIN*EFF/Math.max(LOADMIN,r.tipper_cycle_min/TIP)*PAY/SWELL;
+ d.load_loss=Math.max(0,PLAN-Math.min(PLAN,cap)); d.load_starved=Math.max(0,Math.min(PLAN,cap)-r.excavated_bcm);
+ d.gap=Math.max(0,PLAN-r.excavated_bcm);
+ var l=[d.drill_loss,d.blast_loss,d.load_loss],m=l.indexOf(Math.max.apply(null,l));
+ d.stage='On plan';d.cause='';
+ if(d.gap>=PLAN*TOL){
+  if(l[m]>=PLAN*TOL){d.stage=STAGES[m];d.cause=[r.drill_cause,r.blast_cause,r.load_cause][m]||'Normal variation'}
+  else{d.stage='Starved by upstream';d.cause=d.load_starved>=PLAN*TOL?'Broken rock ran out':'Shortfall from earlier shifts'}
+ }
+ for(var k in r)d[k]=r[k];
+ d.hole_cover=r.holes_open/PH;d.muck_cover=r.muck_open_bcm/PLAN;
+ return d;
+}
+function build(rows){
+ var sx=rows.map(enrich),n=sx.length,planTotal=n*PLAN;
+ var stages=STAGES.map(function(s,i){
+  var k=K[i],own=sum(sx,function(r){return r[k+'_loss']}),by={};
+  sx.forEach(function(r){if(r[k+'_loss']>0){var c=r[k+'_cause']||'Normal variation';by[c]=(by[c]||0)+r[k+'_loss']}});
+  var top=Object.keys(by).sort(function(a,b){return by[b]-by[a]})[0];
+  var starved=k==='drill'?0:sum(sx,function(r){return r[k+'_starved']});
+  return {stage:s,contractor:CON[i],own:own,starved:starved,ownPct:own/planTotal*100,starvedPct:starved/planTotal*100,
+   bad:sx.filter(function(r){return r[k+'_loss']>=PLAN*TOL}).length,top:top||'None',topLoss:top?by[top]:0};
+ });
+ var mx=Math.max.apply(null,stages.map(function(s){return s.own}));
+ stages.forEach(function(s){s.status=s.ownPct>=2?(s.own===mx?'Primary defaulter':'Contributing'):(s.starvedPct>=2?'Starved by upstream':'On plan')});
+ var days={};sx.forEach(function(r){(days[r.date]=days[r.date]||[]).push(r)});
+ var daily=Object.keys(days).sort().map(function(date){var rs=days[date],s=function(f){return sum(rs,function(r){return r[f]})};
+  var l=[s('drill_loss'),s('blast_loss'),s('load_loss')],m=l.indexOf(Math.max.apply(null,l));
+  return {date:date,pct:[s('holes_drilled')/12,s('holes_blasted')/12,s('excavated_bcm')/300],own:l[m]>=1500?STAGES[m]:''}});
+ var by={};
+ sx.forEach(function(r){STAGES.forEach(function(st,i){var l=r[K[i]+'_loss'];if(l>=100){var key=st+'|'+(r[K[i]+'_cause']||'Normal variation');by[key]=(by[key]||0)+l}})});
+ var causes=Object.keys(by).map(function(k){return {stage:k.split('|')[0],cause:k.split('|')[1],loss:by[k]}}).sort(function(a,b){return b.loss-a.loss}).slice(0,8);
+ var dv=[[0,'Rig downtime (min a shift)','drill_downtime_min','drill_loss'],[1,'Explosive issued (% of plan)','expl','blast_loss'],[1,'Clearance and weather delay (min)','blast_delay_min','blast_loss'],[2,'Tipper round trip (min)','tipper_cycle_min','load_loss'],[2,'Shovels working (of 16)','shovels_working','load_loss']];
+ sx.forEach(function(r){r.expl=r.explosive_issued_kg/PKG*100});
+ var drivers=dv.map(function(d){return {si:d[0],name:d[1],r:corr(sx.map(function(r){return r[d[2]]}),sx.map(function(r){return r[d[3]]}))}}).sort(function(a,b){return Math.abs(b.r)-Math.abs(a.r)});
+ return {sx:sx,stages:stages,daily:daily,causes:causes,drivers:drivers,planTotal:planTotal,actual:sum(sx,function(r){return r.excavated_bcm})};
+}
+function svgEl(tag,attrs,parent){var e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(var a in attrs)e.setAttribute(a,attrs[a]);if(parent)parent.appendChild(e);return e}
+function svgText(parent,x,y,t,anchor,fill){var e=svgEl('text',{x:x,y:y,'text-anchor':anchor||'start'},parent);e.textContent=t;if(fill)e.style.fill=fill;return e}
+function dlabel(s){var p=s.split('-');return p[2]+'/'+p[1]}
+
+function render(m){
+ var gap=m.planTotal-m.actual,pct=m.actual/m.planTotal*100,def=m.stages.slice().sort(function(a,b){return b.own-a.own})[0];
+ $('take').textContent='In '+(m.sx.length/3)+' days the mine excavated '+N(m.actual)+' of '+N(m.planTotal)+' BCM, which is '+pct.toFixed(1)+'% of plan. The largest own-caused loss sits with '+def.stage+' ('+def.contractor+'), mostly from '+def.top.toLowerCase()+'.';
+ var badShifts=m.sx.filter(function(r){return r.gap>=PLAN*TOL}).length;
+ [['Output against plan',pct.toFixed(1)+'%',N(m.actual)+' of '+N(m.planTotal)+' BCM'],['Shortfall, BCM',N(gap),'Plan minus excavated'],['Estimated loss','Rs '+N(gap*RATE),'At Rs '+RATE+' per BCM (assumed)'],['Shifts below 95% of plan',badShifts,'out of '+m.sx.length+' shifts']].forEach(function(k){
+  var c=el('div','card',null,$('kpis'));el('span','muted',k[0],c);el('span','big',k[1],c);el('span','muted',k[2],c)});
+ var titles=['Drilling','Blasting','Loading and hauling'],subs=['Contractor A · plan 400 holes a shift','Contractor B · plan 20 t explosive a shift','Contractor C · 16 shovels, 5 tippers each'];
+ m.stages.forEach(function(s,i){
+  if(i)el('span','arrow','→',$('chain'));
+  var c=el('article','card',null,$('chain'));el('h3',null,titles[i],c);el('span','muted',subs[i],c);
+  el('span','pill '+({'Primary defaulter':'bad','Contributing':'warn','Starved by upstream':'warn','On plan':'ok'}[s.status]),s.status,c);
+  el('span','big',N(s.own)+' BCM',c);
+  el('span','muted','Own loss: '+s.ownPct.toFixed(1)+'% of plan, Rs '+N(s.own*RATE),c);
+  el('span','muted','Shifts with own delay: '+s.bad,c);
+  el('span','muted','Biggest cause: '+s.top+' ('+N(s.topLoss)+' BCM)',c);
+  el('span','muted',i===0?'Starved by upstream: none, first stage':'Starved by upstream: '+N(s.starved)+' BCM',c);
+ });
+ heat(m.daily);cover(m.sx);
+ var mxc=m.causes[0].loss;
+ m.causes.forEach(function(c){bar($('causes'),c.stage+': '+c.cause,STAGES.indexOf(c.stage),c.loss/mxc*100,N(c.loss)+' BCM')});
+ m.drivers.forEach(function(d){bar($('drivers'),STAGES[d.si]+': '+d.name,d.si,Math.abs(d.r)*100,'r = '+d.r.toFixed(2))});
+ m.sx.filter(function(r){return r.gap>0}).sort(function(a,b){return b.gap-a.gap}).slice(0,12).forEach(function(r){
+  var tr=el('tr',null,null,$('worst'));[r.date,r.shift,N(r.gap),N(r.gap*RATE),r.stage,r.cause].forEach(function(v){el('td',null,v,tr)})});
+}
+function bar(parent,label,si,pct,val){var r=el('div','row',null,parent);el('span',null,label,r);var t=el('div','track',null,r),f=el('div','fill',null,t);f.style.width=Math.max(2,pct)+'%';f.style.background=COL[si];el('b',null,val,r)}
+function heat(d){
+ var W=700,L=110,cw=(W-L-6)/d.length,rh=28,H=3*(rh+3)+26,s=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Heatmap of daily achievement by stage'},$('heat'));
+ STAGES.forEach(function(st,i){var y=3+i*(rh+3);svgText(s,L-8,y+rh/2+4,st,'end');
+  d.forEach(function(r,j){var v=r.pct[i],q=svgEl('rect',{x:L+j*cw+.5,y:y,width:cw-1,height:rh,rx:2},s);
+   q.style.fill=v>=95?'var(--ok)':v>=80?'var(--warn)':'var(--bad)';
+   if(r.own===st){q.style.stroke='var(--fg)';q.style.strokeWidth='2.5px'}
+   q.style.cursor='pointer';
+   q.addEventListener('click',function(){$('heatinfo').textContent=dlabel(r.date)+' · '+st+': '+v.toFixed(0)+'% of plan'+(r.own===st?' · delay started here':'')})})});
+ d.forEach(function(r,j){if(j%5===0)svgText(s,L+j*cw+cw/2,H-8,dlabel(r.date),'middle')});
+}
+function cover(d){
+ var W=700,H=230,ml=34,mr=8,mt=12,mb=26,ymax=Math.ceil(Math.max.apply(null,d.map(function(r){return Math.max(r.hole_cover,r.muck_cover)}))),
+ x=function(i){return ml+i*(W-ml-mr)/(d.length-1)},y=function(v){return H-mb-v*(H-mb-mt)/ymax},
+ s=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Shifts of work in hand: drilled holes and blasted rock'},$('cover'));
+ for(var t=0;t<=ymax;t++){svgEl('line',{x1:ml,x2:W-mr,y1:y(t),y2:y(t),stroke:'var(--line)'},s);svgText(s,ml-6,y(t)+4,t,'end')}
+ var ref=svgEl('line',{x1:ml,x2:W-mr,y1:y(1),y2:y(1),stroke:'var(--bad)','stroke-dasharray':'4 3'},s);
+ svgText(s,ml+6,y(1)+13,'1 shift of work in hand','start','var(--bad)');
+ [['muck_cover',0],['hole_cover',1]].forEach(function(p){svgEl('path',{d:d.map(function(r,i){return (i?'L':'M')+x(i)+' '+y(r[p[0]])}).join(''),fill:'none',stroke:COL[p[1]],'stroke-width':2},s)});
+ for(var i=0;i<d.length;i+=15)svgText(s,x(i),H-8,dlabel(d[i].date),'middle');
+ var last=d[d.length-1],up=last.muck_cover>=last.hole_cover;
+ svgText(s,x(d.length-1),y(last.muck_cover)+(up?-8:16),'Blasted rock','end',COL[0]);
+ svgText(s,x(d.length-1),y(last.hole_cover)+(up?16:-8),'Drilled holes','end',COL[1]);
+}
+fetch('shifts.json').then(function(r){if(!r.ok)throw new Error('Could not load shifts.json (HTTP '+r.status+')');return r.json()})
+ .then(function(rows){render(build(rows))})
+ .catch(function(e){var b=$('err');b.style.display='block';b.textContent='Sorry, the dashboard could not load. Please send this message to the team: '+e.message;$('take').textContent=''});
+</script>
+</body>
+</html>
