@@ -48,7 +48,9 @@ a{color:inherit}
 
 /* ---------- Hero ---------- */
 .hero{background:var(--band);color:var(--band-ink);border-bottom:4px solid var(--safety)}
-.hero > .wrap{padding-block:10px 34px}
+.hero > .wrap{padding-block:10px 6px}
+/* Mine scene along the foot of the header (decorative drawing) */
+.hero-scene{display:block;width:100%;height:clamp(96px,12vw,180px);object-fit:cover;object-position:50% 100%;pointer-events:none;user-select:none}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px 48px;align-items:center}
 .eyebrow{font-family:var(--f-head);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--band-muted);font-weight:600}
 h1{font-family:var(--f-head);font-weight:700;font-size:clamp(30px,5.2vw,50px);line-height:1.04;margin:8px 0 12px;text-wrap:balance}
@@ -86,7 +88,7 @@ h1 .hl{color:var(--band-hl)}
 }
 
 /* Inputs page: shorter hero with a status strip */
-.hero-compact > .wrap{padding-block:8px 24px}
+.hero-compact > .wrap{padding-block:8px 4px}
 .hero-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap}
 .hero-row h1{margin-bottom:6px}
 .status-strip{display:flex;flex-direction:column;gap:4px;margin-top:18px;padding:11px 14px;border:1px solid var(--band-line);border-radius:var(--r-sm);background:var(--band-2);font-size:14.5px;color:var(--band-text)}
@@ -146,13 +148,19 @@ h3{text-wrap:balance}
 @media (prefers-reduced-motion:no-preference){.skeleton{animation:shimmer 1.3s ease-in-out infinite}}
 @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 
+/* ---------- Stage drawings (single-colour shapes, tinted by the stage colour) ---------- */
+.ico{display:inline-block;flex:none;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+.ico-drill{-webkit-mask-image:url(images/drill.svg);mask-image:url(images/drill.svg)}
+.ico-blast{-webkit-mask-image:url(images/blast.svg);mask-image:url(images/blast.svg)}
+.ico-load{-webkit-mask-image:url(images/load.svg);mask-image:url(images/load.svg)}
+
 /* ---------- Production line: stage cards and buffers ---------- */
 .line3{display:grid;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr) 116px minmax(0,1fr);align-items:stretch}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:var(--shadow)}
 .stage.is-bad{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-bg),var(--shadow)}
 .stage-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.stage-no{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.stage-no i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.stage-no{display:inline-flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.stage-art{width:52px;height:39px}
 .stage h3{font-family:var(--f-head);font-size:25px;font-weight:700;margin:0;line-height:1.1}
 .stage .who{font-size:14px;color:var(--muted);margin:3px 0 0}
 .stage .big{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:700;font-size:38px;line-height:1}
@@ -249,6 +257,7 @@ td .num{font-weight:600;font-size:16px}
 .empty{color:var(--muted);padding:16px 0}
 .empty-state{text-align:center;padding:36px 16px;color:var(--muted)}
 .empty-state strong{display:block;font-family:var(--f-head);font-size:21px;color:var(--ink);margin-bottom:6px}
+.empty-art{width:112px;height:84px;color:var(--muted);opacity:.45;margin:0 auto 14px;display:block}
 .empty-state .btns{justify-content:center;margin-top:16px}
 /* Dashboard delay-days table becomes cards on a phone */
 @media (max-width:640px){
@@ -307,7 +316,8 @@ legend{font-family:var(--f-head);font-weight:700;font-size:19px;padding:0;margin
 .stage-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 @media (max-width:980px){.stage-cols{grid-template-columns:1fr}}
 .box-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.box-head .chipnum{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--f-num);font-size:18px;flex:none}
+.box-head .chipnum{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+.box-head .chipnum .ico{width:34px;height:26px;color:#fff}
 .box-head h3{margin:0;font-family:var(--f-head);font-size:21px;line-height:1.1}
 .box-head small{color:var(--muted);font-size:13.5px;display:block}
 .box-title{margin:0 0 14px;font-family:var(--f-head);font-size:21px}
@@ -365,7 +375,8 @@ details.adv summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;
   }
   @page{margin:12mm}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
-  .menu,.secnav,.no-print,.filters,.toast,#err{display:none!important}
+  .menu,.secnav,.no-print,.filters,.toast,#err,.hero-scene{display:none!important}
+  .hero > .wrap{padding-block:0 18px}
   .hero{border-bottom:3px solid var(--safety)}
   .hero > .wrap{padding-block:0 18px}
   .ring{background:conic-gradient(var(--ring-col) calc(var(--p)*1%),#e5e7eb 0);transition:none}

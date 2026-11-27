@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mine production delay monitor</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
@@ -27,7 +28,9 @@
     <div class="gauge-ring"><div class="ring" id="ring"></div><div class="in"><strong id="ringPct">—</strong><span>of plan delivered</span></div></div>
     <p id="ringSub">&nbsp;</p>
   </div>
-</div></div>
+</div>
+<img class="hero-scene" src="images/mine-scene.svg" alt="" width="2000" height="240">
+</div>
 
 <nav class="secnav no-print" aria-label="Sections"><div class="wrap">
   <a href="#line">Production line</a><a href="#timeline">Day by day</a><a href="#why">Causes</a><a href="#buffers">Work in hand</a><a href="#delays">Delay days</a><a href="#notes">How it is worked out</a>
@@ -201,8 +204,9 @@ function renderLine(m) {
     if (i) box.append(buffer(m, i));
     var cls = STATUS_CLS[s.status];
     var c = el('article', 'stage' + (cls === 'bad' ? ' is-bad' : ''), null, box);
-    var top = el('div', 'stage-top', null, c), no = el('span', 'stage-no', null, top), dot = el('i', null, null, no);
-    dot.style.background = stageColor(i); no.append('Stage ' + (i + 1));
+    var top = el('div', 'stage-top', null, c), no = el('span', 'stage-no', null, top);
+    var art = el('i', 'ico stage-art ' + ['ico-drill', 'ico-blast', 'ico-load'][i], null, no); art.setAttribute('aria-hidden', 'true'); art.style.color = stageColor(i);
+    no.append('Stage ' + (i + 1));
     el('span', 'pill ' + cls, s.status, top);
     var hd = el('div', null, null, c); el('h3', null, s.stage, hd); el('p', 'who', s.contractor + ' · ' + subs[i], hd);
     var big = el('div', 'big', N(s.own), c); el('small', null, 'BCM own loss', big);

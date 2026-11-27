@@ -126,3 +126,10 @@
   figure under each box. Fixed: hidden buttons showing (Cancel editing,
   Remove all, Remove in database mode) and the page jumping down on load.
   Next: real data in Supabase; decide who is responsible for each delay reason.
+- Mine images (Claude): images/ folder with original drawings (no photos, no
+  real MCL material): mine-scene.svg (open-cast pit with benches, coal seam,
+  drill rig, shovel loading a tipper, haul road, blast, light masts) shown
+  along the foot of the header on both pages; drill.svg, blast.svg, load.svg
+  as stage drawings tinted with each stage colour (dashboard stage cards and
+  the shift form); favicon.svg as the browser-tab icon. The scene is left out
+  when printing.

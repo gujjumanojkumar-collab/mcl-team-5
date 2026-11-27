@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Tab icon: an open-cast pit with benches and a coal seam -->
+  <rect width="32" height="32" rx="7" fill="#151a22"/>
+  <path d="M2 11 H8 L9.5 15 H13 L14.5 19.5 H17.5 L19 15 H22.5 L24 11 H30 V30 H2 Z" fill="#e8590c"/>
+  <path d="M2 24 H30" stroke="#151a22" stroke-width="2.6"/>
+  <rect x="10.5" y="5" width="2.2" height="10" fill="#f2b134"/>
+</svg>

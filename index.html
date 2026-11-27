@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mine inputs</title>
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
@@ -22,7 +23,9 @@
     <a class="btn primary" href="dashboard.html">Open the dashboard →</a>
   </div>
   <div class="status-strip" id="source" aria-live="polite"><span class="dot"></span><span>Checking where reports are saved…</span></div>
-</div></div>
+</div>
+<img class="hero-scene" src="images/mine-scene.svg" alt="" width="2000" height="240">
+</div>
 
 <nav class="secnav" aria-label="Inputs sections"><div class="wrap" id="tabs">
   <a href="#add" data-tab="add">Add a shift report</a>
@@ -39,9 +42,9 @@
     <form id="entryForm" class="entry" novalidate>
       <div class="panel"><div class="fields-3" id="grp-Shift"></div></div>
       <div class="stage-cols">
-        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s0)">1</span><div><h3>Drilling</h3><small>Contractor A</small></div></div><div class="pairs" id="grp-Drilling"></div></div>
-        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s1)">2</span><div><h3>Blasting</h3><small>Contractor B</small></div></div><p class="box-hint" id="blastHint"></p><div class="pairs" id="grp-Blasting"></div></div>
-        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s2)">3</span><div><h3>Loading and hauling</h3><small>Contractor C</small></div></div><div class="pairs" id="grp-Loading"></div></div>
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s0)"><i class="ico ico-drill" aria-hidden="true"></i></span><div><h3>Drilling</h3><small>Stage 1 · Contractor A</small></div></div><div class="pairs" id="grp-Drilling"></div></div>
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s1)"><i class="ico ico-blast" aria-hidden="true"></i></span><div><h3>Blasting</h3><small>Stage 2 · Contractor B</small></div></div><p class="box-hint" id="blastHint"></p><div class="pairs" id="grp-Blasting"></div></div>
+        <div class="panel"><div class="box-head"><span class="chipnum" style="background:var(--s2)"><i class="ico ico-load" aria-hidden="true"></i></span><div><h3>Loading and hauling</h3><small>Stage 3 · Contractor C</small></div></div><div class="pairs" id="grp-Loading"></div></div>
       </div>
       <div class="panel"><h3 class="box-title">Follow-up</h3><div class="fields-3" id="grp-Follow"></div></div>
       <div class="form-actions">
@@ -335,7 +338,9 @@ function renderRows() {
   $('moreNote').textContent = '';
   if (!all.length) {
     var tr = el('tr', 'empty-row', null, tb), td = el('td', null, null, tr); td.colSpan = 6;
-    var es = el('div', 'empty-state', null, td); el('strong', null, loaded ? 'No shift reports yet' : 'Loading reports…', es);
+    var es = el('div', 'empty-state', null, td);
+    if (loaded) el('i', 'ico ico-load empty-art', null, es).setAttribute('aria-hidden', 'true');
+    el('strong', null, loaded ? 'No shift reports yet' : 'Loading reports…', es);
     if (loaded) {
       el('span', null, 'Add your first report, or load 30 days of made-up reports to try the dashboard.', es);
       var bs = el('div', 'btns', null, es), a = el('button', 'btn primary', 'Add a shift report', bs); a.type = 'button'; a.onclick = function () { showTab('add', true); };

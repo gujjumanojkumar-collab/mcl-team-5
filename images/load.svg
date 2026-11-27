@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48">
+  <!-- Shovel loading a tipper (stage 3). Shape only: the page colours it. -->
+  <rect x="1" y="40" width="24" height="7" rx="3.5"/>
+  <rect x="3" y="27" width="22" height="13" rx="1.5"/>
+  <path fill-rule="evenodd" d="M14 18 H24 V27 H14 Z M16.5 20.5 H22 V24 H16.5 Z"/>
+  <path d="M19 28 L33.5 7 L36.5 9 L22 30 Z"/>
+  <path d="M34 9 L40.5 16.5 L38.5 18.5 L32 11 Z"/>
+  <path d="M35 16 L46 14 L47 22 L37 24 Z"/>
+  <path d="M37 26 H55 L56 37 H38 Z"/>
+  <path fill-rule="evenodd" d="M56 29 H63 V37 H56 Z M58 31 H61.5 V33.5 H58 Z"/>
+  <rect x="38" y="37" width="25" height="3"/>
+  <circle cx="43" cy="43" r="4.5"/>
+  <circle cx="58" cy="43" r="4.5"/>
+</svg>
