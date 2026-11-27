@@ -4,79 +4,265 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mine production delay monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-:root{--fg:#1f2937;--muted:#6b7280;--bg:#fff;--panel:#f9fafb;--line:#e5e7eb;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--c0:#2563eb;--c1:#7c3aed;--c2:#0d9488}
-@media(prefers-color-scheme:dark){:root{--fg:#e5e7eb;--muted:#9ca3af;--bg:#111827;--panel:#1f2937;--line:#374151;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--c0:#60a5fa;--c1:#a78bfa;--c2:#2dd4bf}}
+/* Layout: control-room board. Dark header band, then a stacked column of panels:
+   summary, the three-stage line, timeline, causes, shift log. */
+:root{
+  --ground:#f3f4f6; --panel:#ffffff; --ink:#151a22; --muted:#5b6472; --line:#e1e4ea; --soft:#eef0f4;
+  --band:#1b2029; --band-ink:#f4f5f7; --band-muted:#a9b0bc;
+  --safety:#e8590c;
+  --ok:#15803d; --ok-bg:#e7f5ec; --warn:#b45309; --warn-bg:#fdf1e2; --bad:#c0262d; --bad-bg:#fbe9ea;
+  --s0:#2f6bd8; --s1:#8a4fd6; --s2:#0e9384;
+  --f-head:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",Arial,Helvetica,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0f1217; --panel:#171b22; --ink:#e8eaee; --muted:#9aa3b1; --line:#2a303a; --soft:#1e232c;
+  --band:#0a0c10; --band-ink:#f4f5f7; --band-muted:#8e96a3;
+  --ok:#3fbf6f; --ok-bg:#15281d; --warn:#f0a33a; --warn-bg:#2c2214; --bad:#f2646a; --bad-bg:#2d1719;
+  --s0:#6b9cf5; --s1:#b48af0; --s2:#34c3b1; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--fg);background:var(--bg);line-height:1.5}
-header.top{background:#c2410c;color:#fff;padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-header.top a{color:#fff;font-weight:bold;text-decoration:none;padding:8px 14px;border:1px solid #fff;border-radius:8px}
-header.top strong{font-size:18px}
-main{max-width:1000px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:28px}
-h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:0 0 8px}h3{margin:0;font-size:17px}
-p{margin:0}.muted{color:var(--muted);font-size:14px}
-.banner{border:2px dashed var(--warn);border-radius:10px;padding:10px 14px;font-size:14px}
-.take{font-size:18px;margin-top:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.big{font-size:28px;font-weight:bold;overflow-wrap:anywhere}
-.chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch}
-.arrow{align-self:center;font-size:22px;color:var(--muted)}
-@media(max-width:760px){.chain{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
-.pill{align-self:flex-start;border:1px solid currentColor;border-radius:99px;padding:2px 10px;font-size:14px;font-weight:bold}
-.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}.pill.ok{color:var(--ok)}
-.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin-bottom:8px}
-.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:4px}
-svg{display:block;width:100%;height:auto}svg text{fill:var(--muted);font-size:11px}
-.info{min-height:24px;font-size:14px;margin-top:6px;font-weight:bold}
-.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.row{display:grid;grid-template-columns:minmax(110px,40%) 1fr auto;gap:8px;align-items:center;margin-bottom:8px;font-size:14px}
-.track{background:var(--line);height:10px;border-radius:3px}.fill{height:100%;border-radius:3px}
-.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted)}
-details{font-size:14px}summary{cursor:pointer;font-weight:bold;padding:8px 0}li{margin-bottom:6px}
-#err{display:none;border:2px solid var(--bad);border-radius:10px;padding:12px}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* Header band (same on every page) */
+.top{background:var(--band);color:var(--band-ink)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-head);font-weight:700;font-size:19px;letter-spacing:.02em;text-decoration:none}
+.brand i{width:12px;height:22px;background:var(--safety);display:inline-block;transform:skewX(-14deg)}
+.menu{display:flex;gap:6px}
+.menu a{font-weight:600;text-decoration:none;padding:9px 16px;border-radius:8px;color:var(--band-muted);min-height:44px;display:inline-flex;align-items:center}
+.menu a:hover{color:var(--band-ink);background:#ffffff14}
+.menu a[aria-current="page"]{color:var(--band-ink);background:#ffffff1f}
+
+/* Hero */
+.hero{background:var(--band);color:var(--band-ink);padding-block:8px 28px;border-bottom:4px solid var(--safety)}
+.eyebrow{font-family:var(--f-head);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--band-muted);font-weight:600}
+h1{font-family:var(--f-head);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:6px 0 10px;text-wrap:balance}
+.lede{font-size:clamp(17px,2.2vw,20px);max-width:62ch;color:var(--band-ink);margin:0}
+.lede b{color:#ffb98a;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #ffffff2e;border-radius:99px;padding:4px 12px;font-size:13px;color:var(--band-muted)}
+.chip.sample{border-color:#f0a33a80;color:#f6c27a}
+
+/* Section nav */
+.secnav{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.secnav .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.secnav a{flex:none;text-decoration:none;font-weight:600;font-size:14px;color:var(--muted);padding:12px 12px;border-bottom:3px solid transparent}
+.secnav a:hover{color:var(--ink);border-bottom-color:var(--line)}
+
+main.wrap{display:flex;flex-direction:column;gap:36px;padding-block:24px 48px}
+section{scroll-margin-top:56px}
+h2{font-family:var(--f-head);font-weight:700;font-size:24px;line-height:1.2;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:4px 0 0;max-width:70ch}
+.head{margin-bottom:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:4px;min-width:0;box-shadow:0 6px 18px #0b0f1714}
+.kpi .k{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kpi .v{font-family:var(--f-num);font-weight:600;font-size:clamp(22px,3.4vw,30px);line-height:1.15;overflow-wrap:anywhere}
+.kpi .n{font-size:14px;color:var(--muted)}
+.kpi.alert .v{color:var(--bad)}
+.meter{height:6px;border-radius:3px;background:var(--soft);overflow:hidden;margin-top:6px}
+.meter span{display:block;height:100%;border-radius:3px}
+
+/* Stage line */
+.line3{display:grid;grid-template-columns:1fr 44px 1fr 44px 1fr;align-items:stretch}
+.link{display:flex;align-items:center;justify-content:center;position:relative}
+.link::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--line)}
+.link span{position:relative;background:var(--ground);color:var(--muted);font-size:20px;line-height:1;padding:2px}
+@media (max-width:860px){.line3{grid-template-columns:1fr}.link{height:34px}.link::before{left:50%;right:auto;top:0;bottom:0;border-top:0;border-left:2px dashed var(--line)}.link span{transform:rotate(90deg)}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage.is-bad{border-color:var(--bad);box-shadow:0 0 0 3px var(--bad-bg)}
+.stage-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.stage .idx{font-family:var(--f-num);font-size:13px;color:var(--muted)}
+.stage h3{font-family:var(--f-head);font-size:22px;font-weight:700;margin:0;line-height:1.1}
+.stage .who{font-size:14px;color:var(--muted);margin:2px 0 0}
+.pill{flex:none;display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.bad{color:var(--bad);background:var(--bad-bg)}.pill.warn{color:var(--warn);background:var(--warn-bg)}.pill.ok{color:var(--ok);background:var(--ok-bg)}
+.stage .big{font-family:var(--f-num);font-weight:600;font-size:28px;line-height:1.1}
+.stage .big small{font-family:var(--f-body);font-size:14px;color:var(--muted);font-weight:500;margin-left:4px}
+.facts{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;margin:0;border-top:1px solid var(--line);padding-top:10px}
+.facts dt{color:var(--muted)}.facts dd{margin:0;text-align:right;font-family:var(--f-num);font-size:13.5px;font-weight:500}
+.cause{font-size:14px;background:var(--soft);border-radius:8px;padding:8px 10px}
+.cause b{font-weight:600}
+
+/* Timeline heatmap */
+.heat{display:grid;gap:3px;align-items:center}
+.heat .lab{font-size:13px;font-weight:600;color:var(--muted);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell{appearance:none;border:0;padding:0;height:32px;border-radius:3px;cursor:pointer;position:relative;min-width:0}
+.cell.ok{background:var(--ok)}.cell.warn{background:var(--warn)}.cell.bad{background:var(--bad)}
+.cell.own::after{content:"";position:absolute;inset:3px;border:2px solid var(--panel);border-radius:2px}
+.cell[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px;z-index:1}
+.cell:focus-visible{outline:3px solid var(--s0);outline-offset:1px}
+.heat .tick{font-family:var(--f-num);font-size:11px;color:var(--muted);white-space:nowrap}
+@media (max-width:560px){.cell{height:26px;border-radius:2px}.cell.own::after{inset:2px;border-width:1.5px}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin:0 0 12px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.legend i.own{background:var(--muted);box-shadow:inset 0 0 0 2px var(--muted),inset 0 0 0 4px var(--panel)}
+.day{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+.day .dk{font-size:13px;color:var(--muted)}
+.day .dv{font-family:var(--f-num);font-weight:600;font-size:19px}
+.day .dv.bad{color:var(--bad)}.day .dv.warn{color:var(--warn)}.day .dv.ok{color:var(--ok)}
+.day-title{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.day-title strong{font-family:var(--f-head);font-size:20px}
+
+/* Charts */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
+.chart{position:relative;width:100%}
+.chart.tall{height:300px}.chart.mid{height:340px}
+.slegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:0 0 10px}
+.slegend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.drv{display:flex;flex-direction:column;gap:14px}
+.drv-row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.drv-name{font-size:15px;font-weight:500}
+.drv-name small{display:block;font-size:13px;color:var(--muted);font-weight:400}
+.drv-val{font-family:var(--f-num);font-size:14px;font-weight:600;text-align:right}
+.drv-val small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:500}
+.drv-bar{grid-column:1/-1;height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.drv-bar span{display:block;height:100%;border-radius:4px}
+
+/* Shift log */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.filters button{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:8px 14px;min-height:40px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.filters button:focus-visible{outline:3px solid var(--s0);outline-offset:2px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:2px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.r,th.r{text-align:right}
+td .num{font-weight:500}
+.tag{display:inline-block;font-size:13px;font-weight:600;padding:2px 9px;border-radius:6px;white-space:nowrap}
+.empty{color:var(--muted);padding:16px 0}
+@media (max-width:640px){
+  table,tbody{display:block}thead{display:none}
+  tr{display:grid;grid-template-columns:1fr auto;grid-template-areas:"d g" "t l" "c c";gap:4px 12px;border-bottom:1px solid var(--line);padding:12px 0}
+  td{border:0;padding:0}
+  td.c-date{grid-area:d;font-weight:600}td.c-shift{display:none}
+  td.c-gap{grid-area:g;text-align:right}td.c-gap::after{content:" BCM";color:var(--muted);font-size:13px}
+  td.c-tag{grid-area:t}td.c-loss{grid-area:l;text-align:right;color:var(--muted);font-size:14px}td.c-loss::before{content:"₹"}
+  td.c-cause{grid-area:c;color:var(--muted);font-size:14px}
+}
+
+/* Notes and errors */
+details.notes{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:4px 20px}
+details.notes summary{cursor:pointer;font-weight:600;padding:14px 0;min-height:44px}
+details.notes ul{margin:0 0 16px;padding-left:20px;max-width:75ch}
+details.notes li{margin-bottom:8px}
+#err{display:none;border:2px solid var(--bad);background:var(--bad-bg);border-radius:var(--r);padding:14px 16px}
+#err code{font-family:var(--f-num);font-size:14px;word-break:break-word}
+.chart-err{color:var(--bad);font-size:14px;padding:12px 0}
+footer{color:var(--muted);font-size:13px;text-align:center;padding-block:0 32px}
 </style>
 </head>
 <body>
-<header class="top"><strong>MCL team tool</strong><nav><a href="index.html">Home</a> <a href="dashboard.html">Dashboard</a></nav></header>
-<main>
-<div id="err"></div>
-<header>
-<h1>Mine production delay monitor</h1>
-<p class="muted">Open-cast mine with three contractors working one after another: drilling, then blasting, then loading and hauling. Plan: 30,000 BCM a day over 3 shifts of 8 hours. (BCM = cubic metres of rock measured in the ground.)</p>
-<p class="banner" style="margin-top:10px">All data here is made up. It was created by a script, with a drill breakdown, rain, an explosive delivery delay and shovel breakdowns built in. Replace it with real shift reports before relying on any number.</p>
-<p class="take" id="take">Loading...</p>
-</header>
-<section class="grid" id="kpis"></section>
-<section><h2>Where the delay sits</h2>
-<p class="muted" style="margin-bottom:10px"><b>Own loss</b> is output a contractor's own machines, supply or clearance could not deliver. <b>Starved</b> is output lost because the stage before it ran out of work. Starved loss is not counted against that contractor.</p>
-<div class="chain" id="chain"></div></section>
-<section><h2>Day by day: which stage fell short</h2>
-<div class="legend"><span><i class="sw" style="background:var(--ok)"></i>95% of plan or more</span><span><i class="sw" style="background:var(--warn)"></i>80 to 95%</span><span><i class="sw" style="background:var(--bad)"></i>Below 80%</span><span><i class="sw" style="border:2px solid var(--fg)"></i>Delay started here</span></div>
-<div id="heat"></div><div class="info" id="heatinfo">Tap a box to see its day.</div>
-<p class="muted">A box with a border is where the delay started. A red box without a border was starved by the stage before it, often days after the real cause.</p></section>
-<section><h2>Work in hand between stages</h2>
-<p class="muted" style="margin-bottom:8px">Drilled holes waiting to be blasted, and blasted rock waiting to be loaded, counted in shifts of work. When a line falls below 1, the next stage will soon stand idle.</p>
-<div id="cover"></div></section>
-<section class="two"><div><h2>Causes, biggest first</h2><div id="causes"></div></div>
-<div><h2>What moves with the delay</h2><p class="muted" style="margin-bottom:8px">r shows how closely a variable moves with the stage's own loss. 1 means very closely. The minus sign means loss rises when the variable falls.</p><div id="drivers"></div></div></section>
-<section><h2>Worst shifts</h2><div class="scroll"><table><thead><tr><th>Date</th><th>Shift</th><th>Gap, BCM</th><th>Loss, Rs</th><th>Where it started</th><th>Cause</th></tr></thead><tbody id="worst"></tbody></table></div></section>
-<details><summary>Plan arithmetic and assumptions</summary><ul>
-<li>30,000 BCM a day with 60 t of explosive is 2 kg per BCM, which matches the powder factor of 2. 1,200 holes a day gives 25 BCM and 50 kg of explosive per hole. Each shift plans 400 holes, 20,000 kg and 10,000 BCM.</li>
-<li>Assumed, not given: tipper load 10 m3 loose, swell factor 1.3, 85% working efficiency, 16 shovels. The 5 minute cycle is read as shovel time per tipper loaded. With 5 tippers a shovel keeps working only while a tipper round trip is 25 minutes or less.</li>
-<li>Cost of delay is assumed at Rs 150 per BCM not delivered. Change RATE in this file to your own figure.</li>
-<li>Broken rock from one shift is available to loading in the next shift. The same holds for drilled holes and blasting.</li></ul></details>
+<header class="top"><div class="wrap">
+  <a class="brand" href="index.html"><i aria-hidden="true"></i>MCL team tool</a>
+  <nav class="menu" aria-label="Main menu"><a href="index.html">Home</a><a href="dashboard.html" aria-current="page">Dashboard</a></nav>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Open-cast mine · Drilling → Blasting → Loading &amp; hauling</div>
+  <h1>Production delay monitor</h1>
+  <p class="lede" id="take">Loading the shift reports…</p>
+  <div class="chips">
+    <span class="chip">Plan 30,000 BCM a day</span>
+    <span class="chip">3 shifts of 8 hours</span>
+    <span class="chip" id="period">Period: …</span>
+    <span class="chip sample">Made-up sample data</span>
+  </div>
+</div></div>
+
+<nav class="secnav" aria-label="Sections"><div class="wrap">
+  <a href="#stages">Stages</a><a href="#timeline">Day by day</a><a href="#buffers">Work in hand</a><a href="#why">Causes</a><a href="#shifts">Shift log</a><a href="#notes">Assumptions</a>
+</div></nav>
+
+<main class="wrap">
+  <div id="err" role="alert"></div>
+  <section class="kpis" id="kpis" aria-label="Key figures"></section>
+
+  <section id="stages">
+    <div class="head"><h2>Where the delay sits</h2>
+      <p class="sub"><b>Own loss</b> is output a contractor's own machines, supply or clearance could not deliver. <b>Starved</b> is output lost because the stage before ran out of work. Starved loss is not counted against that contractor.</p></div>
+    <div class="line3" id="line3"></div>
+  </section>
+
+  <section id="timeline">
+    <div class="head"><h2>Day by day: which stage fell short</h2>
+      <p class="sub">Each box is one day. Tap a box to see that day's figures.</p></div>
+    <div class="panel">
+      <div class="legend"><span><i style="background:var(--ok)"></i>95% of plan or more</span><span><i style="background:var(--warn)"></i>80–95%</span><span><i style="background:var(--bad)"></i>Below 80%</span><span><i class="own"></i>Delay started here</span></div>
+      <div class="heat" id="heat"></div>
+      <div class="day" id="day" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section id="buffers">
+    <div class="head"><h2>Work in hand between stages</h2>
+      <p class="sub">Drilled holes waiting to be blasted, and blasted rock waiting to be loaded, counted in shifts of work. Below the red line, the next stage is about to stand idle.</p></div>
+    <div class="panel"><div class="chart tall"><canvas id="coverChart" role="img" aria-label="Line chart of shifts of work in hand for drilled holes and blasted rock"></canvas></div></div>
+  </section>
+
+  <section id="why" class="grid2">
+    <div>
+      <div class="head"><h2>Causes, biggest first</h2><p class="sub">Own-caused lost output by recorded reason, in BCM.</p></div>
+      <div class="panel">
+        <div class="slegend"><span><i style="background:var(--s0)"></i>Drilling</span><span><i style="background:var(--s1)"></i>Blasting</span><span><i style="background:var(--s2)"></i>Loading &amp; hauling</span></div>
+        <div class="chart mid"><canvas id="causeChart" role="img" aria-label="Bar chart of lost output by cause"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="head"><h2>What moves with the delay</h2><p class="sub">How closely each variable moves with its stage's own loss. Strong means it is worth watching every shift.</p></div>
+      <div class="panel"><div class="drv" id="drivers"></div></div>
+    </div>
+  </section>
+
+  <section id="shifts">
+    <div class="head"><h2>Shift log: worst shifts</h2><p class="sub">The 15 shifts with the biggest output gap. Filter by where the delay started.</p></div>
+    <div class="panel">
+      <div class="filters" id="filters" role="group" aria-label="Filter shifts"></div>
+      <table><thead><tr><th>Date</th><th>Shift</th><th class="r">Gap, BCM</th><th class="r">Loss, ₹</th><th>Started at</th><th>Cause</th></tr></thead><tbody id="worst"></tbody></table>
+    </div>
+  </section>
+
+  <details class="notes" id="notes"><summary>Plan arithmetic and assumptions</summary><ul>
+    <li>30,000 BCM a day with 60 t of explosive gives 2 kg per BCM. 1,200 holes a day gives 25 BCM and 50 kg of explosive per hole. Each shift plans 400 holes, 20,000 kg and 10,000 BCM. (BCM = cubic metres of rock measured in the ground.)</li>
+    <li>Assumed, not given: tipper load 10 m³ loose, swell factor 1.3, 85% working efficiency, 16 shovels. The 5 minute cycle is read as shovel time per tipper. With 5 tippers a shovel keeps working only while a tipper round trip is 25 minutes or less.</li>
+    <li>Cost of delay is assumed at ₹150 per BCM not delivered. Change RATE in this file to your own figure.</li>
+    <li>Broken rock from one shift is available for loading in the next shift. The same holds for drilled holes and blasting.</li>
+    <li>All figures are made up for practice. They are not real MCL data.</li>
+  </ul></details>
 </main>
+<footer>MCL team tool · IIM Sambalpur MDP · sample data only</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script>
 var PLAN=10000, PH=400, KG=50, M3H=25, MIN=480, TIP=5, LOADMIN=5, PAY=10, SWELL=1.3, EFF=0.85, RATE=150, TOL=0.05, PKG=20000;
-var STAGES=['Drilling','Blasting','Loading & hauling'], COL=['var(--c0)','var(--c1)','var(--c2)'];
-var CON=['Contractor A','Contractor B','Contractor C'], K=['drill','blast','load'];
+var STAGES=['Drilling','Blasting','Loading & hauling'], CON=['Contractor A','Contractor B','Contractor C'], K=['drill','blast','load'];
 var $=function(id){return document.getElementById(id)};
 var N=function(v){return Math.round(v).toLocaleString('en-IN')};
+var INR=function(v){return v>=1e7?'₹'+(v/1e7).toFixed(2)+' Cr':v>=1e5?'₹'+(v/1e5).toFixed(1)+' L':'₹'+N(v)};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dl(s){var p=s.split('-');return p[2]+' '+MON[+p[1]-1]}
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 function el(tag,cls,text,parent){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
 function sum(a,f){return a.reduce(function(s,r){return s+f(r)},0)}
 function corr(x,y){var n=x.length,mx=sum(x,function(v){return v})/n,my=sum(y,function(v){return v})/n,a=0,b=0,c=0;for(var i=0;i<n;i++){a+=(x[i]-mx)*(y[i]-my);b+=Math.pow(x[i]-mx,2);c+=Math.pow(y[i]-my,2)}return b&&c?a/Math.sqrt(b*c):0}
+function level(v){return v>=95?'ok':v>=80?'warn':'bad'}
+function stageColor(i){return css(['--s0','--s1','--s2'][i])}
 
 function enrich(r){
  var d={};
@@ -93,7 +279,7 @@ function enrich(r){
   else{d.stage='Starved by upstream';d.cause=d.load_starved>=PLAN*TOL?'Broken rock ran out':'Shortfall from earlier shifts'}
  }
  for(var k in r)d[k]=r[k];
- d.hole_cover=r.holes_open/PH;d.muck_cover=r.muck_open_bcm/PLAN;
+ d.hole_cover=r.holes_open/PH;d.muck_cover=r.muck_open_bcm/PLAN;d.expl=r.explosive_issued_kg/PKG*100;
  return d;
 }
 function build(rows){
@@ -103,7 +289,8 @@ function build(rows){
   sx.forEach(function(r){if(r[k+'_loss']>0){var c=r[k+'_cause']||'Normal variation';by[c]=(by[c]||0)+r[k+'_loss']}});
   var top=Object.keys(by).sort(function(a,b){return by[b]-by[a]})[0];
   var starved=k==='drill'?0:sum(sx,function(r){return r[k+'_starved']});
-  return {stage:s,contractor:CON[i],own:own,starved:starved,ownPct:own/planTotal*100,starvedPct:starved/planTotal*100,
+  var done=[sum(sx,function(r){return r.holes_drilled})/(n*PH),sum(sx,function(r){return r.holes_blasted})/(n*PH),sum(sx,function(r){return r.excavated_bcm})/planTotal][i]*100;
+  return {stage:s,contractor:CON[i],own:own,starved:starved,ownPct:own/planTotal*100,starvedPct:starved/planTotal*100,done:done,
    bad:sx.filter(function(r){return r[k+'_loss']>=PLAN*TOL}).length,top:top||'None',topLoss:top?by[top]:0};
  });
  var mx=Math.max.apply(null,stages.map(function(s){return s.own}));
@@ -111,70 +298,146 @@ function build(rows){
  var days={};sx.forEach(function(r){(days[r.date]=days[r.date]||[]).push(r)});
  var daily=Object.keys(days).sort().map(function(date){var rs=days[date],s=function(f){return sum(rs,function(r){return r[f]})};
   var l=[s('drill_loss'),s('blast_loss'),s('load_loss')],m=l.indexOf(Math.max.apply(null,l));
-  return {date:date,pct:[s('holes_drilled')/12,s('holes_blasted')/12,s('excavated_bcm')/300],own:l[m]>=1500?STAGES[m]:''}});
+  var gap=Math.max(0,30000-s('excavated_bcm'));
+  var cause='';if(l[m]>=1500){var c={};rs.forEach(function(r){var v=r[K[m]+'_loss'];if(v>0){var t=r[K[m]+'_cause']||'Normal variation';c[t]=(c[t]||0)+v}});cause=Object.keys(c).sort(function(a,b){return c[b]-c[a]})[0]}
+  else if(gap>=1500)cause='Starved: earlier shortfall';
+  return {date:date,pct:[s('holes_drilled')/12,s('holes_blasted')/12,s('excavated_bcm')/300],own:l[m]>=1500?STAGES[m]:'',gap:gap,excavated:s('excavated_bcm'),cause:cause}});
  var by={};
- sx.forEach(function(r){STAGES.forEach(function(st,i){var l=r[K[i]+'_loss'];if(l>=100){var key=st+'|'+(r[K[i]+'_cause']||'Normal variation');by[key]=(by[key]||0)+l}})});
- var causes=Object.keys(by).map(function(k){return {stage:k.split('|')[0],cause:k.split('|')[1],loss:by[k]}}).sort(function(a,b){return b.loss-a.loss}).slice(0,8);
- var dv=[[0,'Rig downtime (min a shift)','drill_downtime_min','drill_loss'],[1,'Explosive issued (% of plan)','expl','blast_loss'],[1,'Clearance and weather delay (min)','blast_delay_min','blast_loss'],[2,'Tipper round trip (min)','tipper_cycle_min','load_loss'],[2,'Shovels working (of 16)','shovels_working','load_loss']];
- sx.forEach(function(r){r.expl=r.explosive_issued_kg/PKG*100});
- var drivers=dv.map(function(d){return {si:d[0],name:d[1],r:corr(sx.map(function(r){return r[d[2]]}),sx.map(function(r){return r[d[3]]}))}}).sort(function(a,b){return Math.abs(b.r)-Math.abs(a.r)});
+ sx.forEach(function(r){STAGES.forEach(function(st,i){var l=r[K[i]+'_loss'];if(l>=100){var key=i+'|'+(r[K[i]+'_cause']||'Normal variation');by[key]=(by[key]||0)+l}})});
+ var causes=Object.keys(by).map(function(k){return {si:+k.split('|')[0],cause:k.split('|')[1],loss:by[k]}}).sort(function(a,b){return b.loss-a.loss}).slice(0,8);
+ var dv=[[0,'Rig downtime','minutes a shift','drill_downtime_min','drill_loss'],[1,'Explosive issued','% of plan','expl','blast_loss'],[1,'Clearance and weather hold','minutes','blast_delay_min','blast_loss'],[2,'Tipper round trip','minutes','tipper_cycle_min','load_loss'],[2,'Shovels working','out of 16','shovels_working','load_loss']];
+ var drivers=dv.map(function(d){return {si:d[0],name:d[1],unit:d[2],r:corr(sx.map(function(r){return r[d[3]]}),sx.map(function(r){return r[d[4]]}))}}).sort(function(a,b){return Math.abs(b.r)-Math.abs(a.r)});
  return {sx:sx,stages:stages,daily:daily,causes:causes,drivers:drivers,planTotal:planTotal,actual:sum(sx,function(r){return r.excavated_bcm})};
 }
-function svgEl(tag,attrs,parent){var e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(var a in attrs)e.setAttribute(a,attrs[a]);if(parent)parent.appendChild(e);return e}
-function svgText(parent,x,y,t,anchor,fill){var e=svgEl('text',{x:x,y:y,'text-anchor':anchor||'start'},parent);e.textContent=t;if(fill)e.style.fill=fill;return e}
-function dlabel(s){var p=s.split('-');return p[2]+'/'+p[1]}
 
-function render(m){
+/* ---------- Rendering ---------- */
+var M=null, charts=[], filter='All';
+function renderTop(m){
  var gap=m.planTotal-m.actual,pct=m.actual/m.planTotal*100,def=m.stages.slice().sort(function(a,b){return b.own-a.own})[0];
- $('take').textContent='In '+(m.sx.length/3)+' days the mine excavated '+N(m.actual)+' of '+N(m.planTotal)+' BCM, which is '+pct.toFixed(1)+'% of plan. The largest own-caused loss sits with '+def.stage+' ('+def.contractor+'), mostly from '+def.top.toLowerCase()+'.';
- var badShifts=m.sx.filter(function(r){return r.gap>=PLAN*TOL}).length;
- [['Output against plan',pct.toFixed(1)+'%',N(m.actual)+' of '+N(m.planTotal)+' BCM'],['Shortfall, BCM',N(gap),'Plan minus excavated'],['Estimated loss','Rs '+N(gap*RATE),'At Rs '+RATE+' per BCM (assumed)'],['Shifts below 95% of plan',badShifts,'out of '+m.sx.length+' shifts']].forEach(function(k){
-  var c=el('div','card',null,$('kpis'));el('span','muted',k[0],c);el('span','big',k[1],c);el('span','muted',k[2],c)});
- var titles=['Drilling','Blasting','Loading and hauling'],subs=['Contractor A · plan 400 holes a shift','Contractor B · plan 20 t explosive a shift','Contractor C · 16 shovels, 5 tippers each'];
+ var t=$('take');t.textContent='';
+ t.append('In '+(m.sx.length/3)+' days the mine moved ',el('b',null,N(m.actual)+' BCM'),' against a plan of '+N(m.planTotal)+' — ',el('b',null,pct.toFixed(1)+'%'),'. The biggest own-caused loss sits with ',el('b',null,def.stage+' ('+def.contractor+')'),', mostly from '+def.top.toLowerCase()+'.');
+ $('period').textContent=dl(m.daily[0].date)+' – '+dl(m.daily[m.daily.length-1].date)+' 2026';
+ var bad=m.sx.filter(function(r){return r.gap>=PLAN*TOL}).length;
+ var tiles=[
+  {k:'Output vs plan',v:pct.toFixed(1)+'%',n:N(m.actual)+' of '+N(m.planTotal)+' BCM',meter:pct,cls:pct<95?'alert':''},
+  {k:'Shortfall',v:N(gap),n:'BCM not delivered'},
+  {k:'Estimated loss',v:INR(gap*RATE),n:'₹'+N(gap*RATE)+' at ₹'+RATE+' per BCM (assumed)',cls:'alert'},
+  {k:'Shifts below 95%',v:bad+' / '+m.sx.length,n:Math.round(bad/m.sx.length*100)+'% of all shifts'}];
+ $('kpis').replaceChildren();
+ tiles.forEach(function(x){var c=el('div','kpi '+(x.cls||''),null,$('kpis'));el('span','k',x.k,c);el('span','v',x.v,c);el('span','n',x.n,c);
+  if(x.meter!=null){var mm=el('div','meter',null,c),s=el('span',null,null,mm);s.style.width=Math.min(100,x.meter)+'%';s.style.background=css('--'+level(x.meter))}});
+}
+function renderStages(m){
+ var box=$('line3');box.replaceChildren();
+ var subs=['Plan 400 holes a shift','Plan 20 t explosive a shift','16 shovels, 5 tippers each'];
+ var unit=['of holes drilled','of holes blasted','of rock moved'];
  m.stages.forEach(function(s,i){
-  if(i)el('span','arrow','→',$('chain'));
-  var c=el('article','card',null,$('chain'));el('h3',null,titles[i],c);el('span','muted',subs[i],c);
-  el('span','pill '+({'Primary defaulter':'bad','Contributing':'warn','Starved by upstream':'warn','On plan':'ok'}[s.status]),s.status,c);
-  el('span','big',N(s.own)+' BCM',c);
-  el('span','muted','Own loss: '+s.ownPct.toFixed(1)+'% of plan, Rs '+N(s.own*RATE),c);
-  el('span','muted','Shifts with own delay: '+s.bad,c);
-  el('span','muted','Biggest cause: '+s.top+' ('+N(s.topLoss)+' BCM)',c);
-  el('span','muted',i===0?'Starved by upstream: none, first stage':'Starved by upstream: '+N(s.starved)+' BCM',c);
+  if(i){var lk=el('div','link',null,box);el('span',null,'→',lk).setAttribute('aria-hidden','true')}
+  var cls={'Primary defaulter':'bad','Contributing':'warn','Starved by upstream':'warn','On plan':'ok'}[s.status];
+  var c=el('article','stage'+(cls==='bad'?' is-bad':''),null,box);
+  var top=el('div','stage-top',null,c),l=el('div',null,null,top);
+  el('div','idx','Stage '+(i+1),l);el('h3',null,s.stage,l);el('p','who',s.contractor+' · '+subs[i],l);
+  el('span','pill '+cls,s.status,top);
+  var big=el('div','big',N(s.own),c);el('small',null,'BCM own loss',big);
+  var mm=el('div','meter',null,c),bar=el('span',null,null,mm);bar.style.width=Math.min(100,s.done)+'%';bar.style.background=stageColor(i);
+  var f=el('dl','facts',null,c);
+  [['Achieved ('+unit[i].replace('of ','')+')',s.done.toFixed(1)+'%'],['Share of plan lost',s.ownPct.toFixed(1)+'%'],['Cost of own loss',INR(s.own*RATE)],['Shifts with own delay',String(s.bad)],['Starved by stage before',i===0?'— first stage':N(s.starved)+' BCM']].forEach(function(p){
+   el('dt',null,p[0],f);el('dd',null,p[1],f)});
+  var ca=el('div','cause',null,c);ca.append('Main cause: ',el('b',null,s.top),' ('+N(s.topLoss)+' BCM)');
  });
- heat(m.daily);cover(m.sx);
- var mxc=m.causes[0].loss;
- m.causes.forEach(function(c){bar($('causes'),c.stage+': '+c.cause,STAGES.indexOf(c.stage),c.loss/mxc*100,N(c.loss)+' BCM')});
- m.drivers.forEach(function(d){bar($('drivers'),STAGES[d.si]+': '+d.name,d.si,Math.abs(d.r)*100,'r = '+d.r.toFixed(2))});
- m.sx.filter(function(r){return r.gap>0}).sort(function(a,b){return b.gap-a.gap}).slice(0,12).forEach(function(r){
-  var tr=el('tr',null,null,$('worst'));[r.date,r.shift,N(r.gap),N(r.gap*RATE),r.stage,r.cause].forEach(function(v){el('td',null,v,tr)})});
 }
-function bar(parent,label,si,pct,val){var r=el('div','row',null,parent);el('span',null,label,r);var t=el('div','track',null,r),f=el('div','fill',null,t);f.style.width=Math.max(2,pct)+'%';f.style.background=COL[si];el('b',null,val,r)}
-function heat(d){
- var W=700,L=110,cw=(W-L-6)/d.length,rh=28,H=3*(rh+3)+26,s=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Heatmap of daily achievement by stage'},$('heat'));
- STAGES.forEach(function(st,i){var y=3+i*(rh+3);svgText(s,L-8,y+rh/2+4,st,'end');
-  d.forEach(function(r,j){var v=r.pct[i],q=svgEl('rect',{x:L+j*cw+.5,y:y,width:cw-1,height:rh,rx:2},s);
-   q.style.fill=v>=95?'var(--ok)':v>=80?'var(--warn)':'var(--bad)';
-   if(r.own===st){q.style.stroke='var(--fg)';q.style.strokeWidth='2.5px'}
-   q.style.cursor='pointer';
-   q.addEventListener('click',function(){$('heatinfo').textContent=dlabel(r.date)+' · '+st+': '+v.toFixed(0)+'% of plan'+(r.own===st?' · delay started here':'')})})});
- d.forEach(function(r,j){if(j%5===0)svgText(s,L+j*cw+cw/2,H-8,dlabel(r.date),'middle')});
+function renderHeat(m){
+ var d=m.daily,h=$('heat');h.replaceChildren();
+ var narrow=window.innerWidth<560;
+ h.style.gridTemplateColumns=(narrow?'64px':'130px')+' repeat('+d.length+',minmax(0,1fr))';
+ var short=['Drilling','Blasting','Loading'];
+ STAGES.forEach(function(st,i){
+  el('div','lab',narrow?short[i]:st,h);
+  d.forEach(function(r,j){
+   var v=r.pct[i],b=el('button','cell '+level(v)+(r.own===st?' own':''),null,h);
+   b.type='button';b.dataset.j=j;b.setAttribute('aria-pressed','false');
+   b.setAttribute('aria-label',dl(r.date)+', '+st+': '+v.toFixed(0)+'% of plan'+(r.own===st?', delay started here':''));
+   b.addEventListener('click',function(){selectDay(j)});
+  });
+ });
+ el('div',null,null,h);
+ var step=narrow?7:5;
+ d.forEach(function(r,j){var t=el('div','tick',j%step===0?dl(r.date):'',h);t.style.overflow='visible'});
+ var worst=d.reduce(function(a,r,j){return r.gap>d[a].gap?j:a},0);selectDay(worst);
 }
-function cover(d){
- var W=700,H=230,ml=34,mr=8,mt=12,mb=26,ymax=Math.ceil(Math.max.apply(null,d.map(function(r){return Math.max(r.hole_cover,r.muck_cover)}))),
- x=function(i){return ml+i*(W-ml-mr)/(d.length-1)},y=function(v){return H-mb-v*(H-mb-mt)/ymax},
- s=svgEl('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Shifts of work in hand: drilled holes and blasted rock'},$('cover'));
- for(var t=0;t<=ymax;t++){svgEl('line',{x1:ml,x2:W-mr,y1:y(t),y2:y(t),stroke:'var(--line)'},s);svgText(s,ml-6,y(t)+4,t,'end')}
- var ref=svgEl('line',{x1:ml,x2:W-mr,y1:y(1),y2:y(1),stroke:'var(--bad)','stroke-dasharray':'4 3'},s);
- svgText(s,ml+6,y(1)+13,'1 shift of work in hand','start','var(--bad)');
- [['muck_cover',0],['hole_cover',1]].forEach(function(p){svgEl('path',{d:d.map(function(r,i){return (i?'L':'M')+x(i)+' '+y(r[p[0]])}).join(''),fill:'none',stroke:COL[p[1]],'stroke-width':2},s)});
- for(var i=0;i<d.length;i+=15)svgText(s,x(i),H-8,dlabel(d[i].date),'middle');
- var last=d[d.length-1],up=last.muck_cover>=last.hole_cover;
- svgText(s,x(d.length-1),y(last.muck_cover)+(up?-8:16),'Blasted rock','end',COL[0]);
- svgText(s,x(d.length-1),y(last.hole_cover)+(up?16:-8),'Drilled holes','end',COL[1]);
+function selectDay(j){
+ var r=M.daily[j];
+ document.querySelectorAll('.cell').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.j==j?'true':'false')});
+ var box=$('day');box.replaceChildren();
+ var t=el('div','day-title',null,box);el('strong',null,dl(r.date)+' 2026',t);
+ el('span','sub',r.own?'Delay started at '+r.own+' — '+r.cause:(r.gap>=1500?'Output short, but no stage at fault that day: '+r.cause.toLowerCase():'All stages close to plan'),t);
+ ['Drilling','Blasting','Loading & hauling'].forEach(function(st,i){var c=el('div',null,null,box);el('div','dk',st,c);el('div','dv '+level(r.pct[i]),r.pct[i].toFixed(0)+'%',c)});
+ var c=el('div',null,null,box);el('div','dk','Output gap',c);el('div','dv',N(r.gap)+' BCM',c);
+ c=el('div',null,null,box);el('div','dk','Estimated loss',c);el('div','dv','₹'+N(r.gap*RATE),c);
 }
+function chartErr(id,msg){var cv=$(id);var p=el('p','chart-err','This chart could not be drawn. Error: '+msg);cv.parentNode.replaceWith(p)}
+function renderCharts(m){
+ charts.forEach(function(c){c.destroy()});charts=[];
+ if(typeof Chart==='undefined'){chartErr('coverChart','Chart.js did not load. Check the internet connection.');chartErr('causeChart','Chart.js did not load. Check the internet connection.');return}
+ var ink=css('--muted'),grid=css('--line'),bad=css('--bad');
+ Chart.defaults.font.family=css('--f-body');Chart.defaults.font.size=13;Chart.defaults.color=ink;
+ try{
+  var labels=m.sx.map(function(r){return dl(r.date)+' '+r.shift});
+  charts.push(new Chart($('coverChart'),{type:'line',data:{labels:labels,datasets:[
+   {label:'Blasted rock in hand',data:m.sx.map(function(r){return +r.muck_cover.toFixed(2)}),borderColor:stageColor(2),backgroundColor:stageColor(2)+'22',fill:true,tension:0,pointRadius:0,borderWidth:2},
+   {label:'Drilled holes in hand',data:m.sx.map(function(r){return +r.hole_cover.toFixed(2)}),borderColor:stageColor(0),tension:0,pointRadius:0,borderWidth:2},
+   {label:'1 shift of work (danger line)',data:labels.map(function(){return 1}),borderColor:bad,borderDash:[6,4],pointRadius:0,borderWidth:1.5}]},
+   options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{boxWidth:14,boxHeight:3}},tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.y.toFixed(2)+' shifts'}}}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:window.innerWidth<560?4:8,maxRotation:0,callback:function(v){return this.getLabelForValue(v).slice(0,6)}}},
+     y:{beginAtZero:true,grid:{color:grid},title:{display:true,text:'Shifts of work'}}}}}));
+ }catch(e){chartErr('coverChart',e.message)}
+ try{
+  var wrapL=function(s){var w=s.split(' '),out=[],cur='';w.forEach(function(x){if((cur+' '+x).trim().length>22){out.push(cur);cur=x}else cur=(cur+' '+x).trim()});out.push(cur);return out};
+  var short=['drilling','blasting','loading'];
+  charts.push(new Chart($('causeChart'),{type:'bar',data:{labels:m.causes.map(function(c){return wrapL(/^(Normal|Minor)/.test(c.cause)?c.cause+' ('+short[c.si]+')':c.cause)}),datasets:[{data:m.causes.map(function(c){return c.loss}),backgroundColor:m.causes.map(function(c){return stageColor(c.si)}),borderRadius:4,barPercentage:.8}]},
+   options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){var x=m.causes[c[0].dataIndex];return STAGES[x.si]+': '+x.cause},label:function(c){return N(c.parsed.x)+' BCM · ₹'+N(c.parsed.x*RATE)}}}},
+    scales:{x:{grid:{color:grid},ticks:{callback:function(v){return v>=1000?(v/1000)+'k':v}},title:{display:true,text:'BCM lost'}},y:{grid:{display:false},ticks:{autoSkip:false}}}}}));
+ }catch(e){chartErr('causeChart',e.message)}
+}
+function renderDrivers(m){
+ var box=$('drivers');box.replaceChildren();
+ m.drivers.forEach(function(d){
+  var a=Math.abs(d.r),word=a>=0.7?'Strong link':a>=0.4?'Moderate link':'Weak link';
+  var row=el('div','drv-row',null,box),nm=el('div','drv-name',d.name,row);el('small',null,STAGES[d.si]+' · '+d.unit+(d.r<0?' · loss rises as this falls':''),nm);
+  var v=el('div','drv-val','r = '+d.r.toFixed(2),row);el('small',null,word,v);
+  var b=el('div','drv-bar',null,row),s=el('span',null,null,b);s.style.width=(a*100)+'%';s.style.background=stageColor(d.si);
+ });
+ el('p','sub','Sample data: these links are built into the made-up data, so they look stronger than real data will.',box);
+}
+function renderFilters(){
+ var f=$('filters');f.replaceChildren();
+ ['All','Drilling','Blasting','Loading & hauling','Starved by upstream'].forEach(function(x){
+  var b=el('button',null,x,f);b.type='button';b.setAttribute('aria-pressed',x===filter?'true':'false');
+  b.addEventListener('click',function(){filter=x;renderFilters();renderTable(M)})});
+}
+function tagStyle(t,stage){var i=STAGES.indexOf(stage);if(i>=0){t.style.color=stageColor(i);t.style.background=stageColor(i)+'1f'}else{t.style.color=css('--warn');t.style.background=css('--warn-bg')}}
+function renderTable(m){
+ var tb=$('worst');tb.replaceChildren();
+ var rows=m.sx.filter(function(r){return r.gap>0&&(filter==='All'||r.stage===filter)}).sort(function(a,b){return b.gap-a.gap}).slice(0,15);
+ if(!rows.length){var tr=el('tr',null,null,tb),td=el('td','empty','No shifts match this filter.',tr);td.colSpan=6;return}
+ rows.forEach(function(r){
+  var tr=el('tr',null,null,tb);
+  var narrow=window.innerWidth<=640;
+  var c=[['c-date',narrow?dl(r.date)+' · Shift '+r.shift:dl(r.date)],['c-shift',r.shift],['c-gap r',N(r.gap),1],['c-loss r',N(r.gap*RATE),1]];
+  c.forEach(function(x){var td=el('td',x[0],null,tr);el('span',x[2]?'num':null,x[1],td)});
+  var td=el('td','c-tag',null,tr);tagStyle(el('span','tag',r.stage,td),r.stage);
+  el('td','c-cause',r.cause||'—',tr);
+ });
+}
+function renderAll(){renderTop(M);renderStages(M);renderHeat(M);renderCharts(M);renderDrivers(M);renderFilters();renderTable(M)}
+function showError(msg){var b=$('err');b.style.display='block';b.replaceChildren(el('strong',null,'Sorry, the dashboard could not load. '),document.createTextNode('Please send this message to the team: '),el('code',null,msg));$('take').textContent='The shift reports could not be loaded.'}
+
 fetch('shifts.json').then(function(r){if(!r.ok)throw new Error('Could not load shifts.json (HTTP '+r.status+')');return r.json()})
- .then(function(rows){render(build(rows))})
- .catch(function(e){var b=$('err');b.style.display='block';b.textContent='Sorry, the dashboard could not load. Please send this message to the team: '+e.message;$('take').textContent=''});
+ .then(function(rows){M=build(rows);renderAll();
+  var w=window.innerWidth,t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(function(){if((w<=640)!==(window.innerWidth<=640)||(w<560)!==(window.innerWidth<560)){w=window.innerWidth;renderHeat(M);renderCharts(M);renderTable(M)}},200)});
+  if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll)})
+ .catch(function(e){showError(e.message)});
 </script>
 </body>
 </html>
