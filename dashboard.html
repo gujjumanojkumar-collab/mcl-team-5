@@ -85,6 +85,8 @@
 <footer>MCL team tool · IIM Sambalpur MDP · made-up data only</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="mine.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
@@ -99,9 +101,9 @@ function stageColor(i) { return css(['--s0', '--s1', '--s2'][i]); }
 
 var M = null, S = null, isSample = false, charts = [], filter = 'All';
 
-function load() {
+async function load() {
   S = Mine.loadSettings();
-  var entries = Mine.loadEntries();
+  var entries = await Mine.Store.list();
   isSample = !entries.length;
   if (isSample) entries = Mine.sample(S);
   M = Mine.compute(S, entries);
@@ -113,11 +115,11 @@ function renderTop(m) {
   if (!m.days.length) { t.textContent = 'There are no shift reports with a date yet. Add some on the Inputs page.'; return false; }
   var pct = m.actual / m.planTotal * 100, def = m.stages.slice().sort(function (a, b) { return b.own - a.own; })[0];
   t.append('In ' + m.days.length + ' day' + (m.days.length === 1 ? '' : 's') + ' the mine moved ', el('b', null, N(m.actual) + ' BCM'), ' against a plan of ' + N(m.planTotal) + ': ', el('b', null, pct.toFixed(1) + '%'), '. ');
-  if (def.own > 0) t.append('The biggest own-caused loss sits with ', el('b', null, def.stage + ' (' + def.contractor + ')'), ', mostly from ' + def.top.toLowerCase() + '.');
+  if (def.own > 0) t.append('The biggest own-caused loss sits with ', el('b', null, def.stage + ' (' + def.contractor + ')'), (def.top === 'Not recorded' ? '. The reason was not recorded.' : ', mostly from ' + def.top.toLowerCase() + '.'));
   else t.append('No stage caused a loss of its own.');
   $('planChip').textContent = 'Plan ' + N(S.target_bcm_day) + ' BCM a day';
   $('period').textContent = dl(m.days[0].date) + ' – ' + dl(m.days[m.days.length - 1].date) + ' ' + m.days[m.days.length - 1].date.slice(0, 4);
-  $('sourceChip').textContent = isSample ? 'Made-up sample reports' : 'Your ' + m.entryCount + ' shift reports';
+  $('sourceChip').textContent = (isSample ? 'Made-up sample reports' : m.entryCount + ' shift report' + (m.entryCount === 1 ? '' : 's')) + (Mine.Store.mode === 'database' ? ' · team database' : ' · this browser only');
   var bad = m.days.filter(function (x) { return x.gap >= x.plan * 0.05; }).length;
   var tiles = [
     { k: 'Output vs plan', v: pct.toFixed(1) + '%', n: N(m.actual) + ' of ' + N(m.planTotal) + ' BCM', meter: pct, cls: pct < 95 ? 'alert' : '' },
@@ -256,9 +258,10 @@ function renderNotes() {
    'A stage counts as the defaulter on a day when its own loss is at least 5% of the daily plan. Over the whole period, a stage is "Contributing" when its own loss is at least 2% of plan.',
    'All figures are made up for practice. They are not real MCL data.'].forEach(function (t) { el('li', null, t, ul); });
 }
-function renderAll() {
+async function renderAll() {
   try {
-    load();
+    await load();
+    $('err').style.display = 'none';
     if (!renderTop(M)) return;
     renderStages(M); renderHeat(M); renderCharts(M); renderDrivers(M); renderFilters(); renderTable(M); renderNotes();
   } catch (e) { showError(e.message); }
@@ -267,9 +270,14 @@ function showError(msg) { var b = $('err'); b.style.display = 'block'; b.replace
 
 renderAll();
 var w = window.innerWidth, t;
-window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if ((w <= 640) !== (window.innerWidth <= 640) || (w < 560) !== (window.innerWidth < 560)) { w = window.innerWidth; renderHeat(M); renderCharts(M); renderTable(M); } }, 200); });
+window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { if (!M || !M.days.length) return; if ((w <= 640) !== (window.innerWidth <= 640) || (w < 560) !== (window.innerWidth < 560)) { w = window.innerWidth; renderHeat(M); renderCharts(M); renderTable(M); } }, 200); });
 window.addEventListener('storage', function () { renderAll(); });
-if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { renderCharts(M); renderStages(M); renderTable(M); });
+// Pick up reports other people saved: refresh every minute, and when the page is shown again.
+if (Mine.Store.mode === 'database') {
+  setInterval(function () { if (!document.hidden) renderAll(); }, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) renderAll(); });
+}
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (!M || !M.days.length) return; renderCharts(M); renderStages(M); renderTable(M); });
 </script>
 </body>
 </html>

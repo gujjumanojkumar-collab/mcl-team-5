@@ -71,11 +71,18 @@
   commit and push.
 
 ## Our tool (filled in during Phase 1)
-- Team:
-- Tool name:
-- Problem:
-- Who records / who decides:
-- Table name and columns:
+- Team: MCL team 5
+- Tool name: Mine production delay monitor
+- Problem: find which contractor (drilling, blasting, loading and hauling)
+  caused a production delay, where it started, and what it cost.
+- Who records / who decides: shift supervisors record shift reports; the
+  manager reads the dashboard and follows up with the defaulting contractor.
+- Table name and columns: shift_reports (see database/01-setup.sql):
+  id, created_at, report_date, shift, location, holes_drilled,
+  drill_delay_min, drill_reason, holes_blasted, explosive_issued_kg,
+  explosive_used_kg, blast_delay_min, blast_reason, shovels_working,
+  tippers_working, round_trip_min, bcm_moved, load_delay_min, load_reason,
+  urgency, status, note. One row per date and shift.
 - Pages: index.html = entry page; dashboard.html = dashboard
 
 ## Progress Log (newest entry at the bottom)
@@ -103,3 +110,10 @@
   made-up sample reports. Known problems: data is saved in each browser only
   (localStorage), so team members do not see each other's reports. Next: move
   the reports to the Supabase table so everyone shares them.
+- Database connection (Claude): database/01-setup.sql creates shift_reports
+  with RLS (read, add, update; no delete). index.html and dashboard.html load
+  supabase-js and config.js, and save reports to the table when config.js is
+  filled in; until then they keep reports in the browser. The dashboard
+  re-reads the table every minute. Mine settings are still kept per browser
+  (only one table is allowed). Not tested against the real database.
+  Next: Data Keeper runs 01-setup.sql and fills in config.js, then test.

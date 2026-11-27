@@ -320,7 +320,80 @@ var Mine = (function () {
     return { entries: out, skipped: bad };
   }
 
-  return { DEFAULTS: DEFAULTS, SETTINGS_FIELDS: SETTINGS_FIELDS, ENTRY_FIELDS: ENTRY_FIELDS, REASONS: REASONS, STAGES: STAGES, NUM_KEYS: NUM_KEYS,
+  /* ---------- where shift reports are kept ----------
+     Uses the Supabase table "shift_reports" when config.js is filled in.
+     Otherwise keeps the reports in this browser only. */
+  var Store = (function () {
+    var url = String(window.SUPABASE_URL || ''), key = String(window.SUPABASE_PUBLISHABLE_KEY || '');
+    var filled = url.indexOf('PASTE') === -1 && /^https:\/\//.test(url) && key.indexOf('sb_publishable_') === 0;
+    var lib = window.supabase && window.supabase.createClient;
+    var db = null, problem = '';
+    if (filled && lib) { try { db = window.supabase.createClient(url, key); } catch (e) { problem = 'Could not start the database connection: ' + e.message; } }
+    else if (filled) problem = 'The database library (supabase-js) did not load. Check the internet connection.';
+    var TABLE = 'shift_reports';
+    function toRow(e) {
+      var r = {};
+      CSV_KEYS.forEach(function (k) {
+        if (k === 'date') r.report_date = e.date;
+        else if (NUM_KEYS.indexOf(k) >= 0) r[k] = num(e[k]);
+        else r[k] = e[k] == null ? '' : String(e[k]);
+      });
+      ['drill_reason', 'blast_reason', 'load_reason'].forEach(function (k) { if (!r[k]) r[k] = 'None'; });
+      if (['Low', 'Medium', 'High'].indexOf(r.urgency) < 0) r.urgency = 'Low';
+      if (['Open', 'In progress', 'Resolved'].indexOf(r.status) < 0) r.status = 'Open';
+      return r;
+    }
+    function fromRow(r) {
+      var e = { id: r.id, date: r.report_date };
+      CSV_KEYS.forEach(function (k) { if (k !== 'date') e[k] = NUM_KEYS.indexOf(k) >= 0 ? num(r[k]) : (r[k] == null ? '' : r[k]); });
+      return e;
+    }
+    function fail(err) {
+      var msg = (err && (err.message || err.details || err.hint)) || String(err);
+      if (err && err.code === '23505') msg = 'A report for that date and shift already exists. (' + msg + ')';
+      if (err && (err.code === '42P01' || /does not exist/.test(msg))) msg = 'The table "shift_reports" was not found. Run database/01-setup.sql in the Supabase SQL Editor. (' + msg + ')';
+      return new Error(msg);
+    }
+    function localMerge(list) {
+      var all = loadEntries(), keys = {};
+      list.forEach(function (e) { keys[e.date + '|' + e.shift] = 1; if (!e.id) e.id = newId(); });
+      all = all.filter(function (e) { return !keys[e.date + '|' + e.shift]; }).concat(list);
+      if (!saveEntries(all)) throw new Error('This browser would not save the reports (storage is blocked or full).');
+    }
+    return {
+      mode: db ? 'database' : 'browser',
+      problem: problem,
+      canRemove: !db,
+      list: async function () {
+        if (!db) { if (problem) throw new Error(problem); return loadEntries(); }
+        var res = await db.from(TABLE).select('*').order('report_date', { ascending: true }).order('shift', { ascending: true }).range(0, 9999);
+        if (res.error) throw fail(res.error);
+        return (res.data || []).map(fromRow);
+      },
+      // Add reports, or update the one already saved for the same date and shift.
+      upsert: async function (list) {
+        if (!db) { if (problem) throw new Error(problem); localMerge(list.map(function (e) { var c = {}; for (var k in e) c[k] = e[k]; return c; })); return; }
+        var rows = list.map(toRow);
+        for (var i = 0; i < rows.length; i += 500) {
+          var res = await db.from(TABLE).upsert(rows.slice(i, i + 500), { onConflict: 'report_date,shift' });
+          if (res.error) throw fail(res.error);
+        }
+      },
+      update: async function (id, e) {
+        if (!db) { if (problem) throw new Error(problem); var all = loadEntries().map(function (x) { if (x.id === id) { var c = {}; for (var k in e) c[k] = e[k]; c.id = id; return c; } return x; }); if (!saveEntries(all)) throw new Error('This browser would not save the reports.'); return; }
+        var res = await db.from(TABLE).update(toRow(e)).eq('id', id);
+        if (res.error) throw fail(res.error);
+      },
+      // Only possible for reports kept in the browser. The database allows no delete.
+      remove: async function (ids) {
+        if (db) throw new Error('Reports in the team database cannot be removed. Set the status to Resolved instead.');
+        var all = loadEntries().filter(function (x) { return ids.indexOf(x.id) < 0; });
+        if (!saveEntries(all)) throw new Error('This browser would not save the reports.');
+      }
+    };
+  })();
+
+  return { DEFAULTS: DEFAULTS, Store: Store, SETTINGS_FIELDS: SETTINGS_FIELDS, ENTRY_FIELDS: ENTRY_FIELDS, REASONS: REASONS, STAGES: STAGES, NUM_KEYS: NUM_KEYS,
     loadSettings: loadSettings, saveSettings: saveSettings, loadEntries: loadEntries, saveEntries: saveEntries,
     derive: derive, checks: checks, sample: sample, compute: compute, toCSV: toCSV, parseCSV: parseCSV, newId: newId, N: N, num: num };
 })();
