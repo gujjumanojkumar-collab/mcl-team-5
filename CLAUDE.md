@@ -140,3 +140,7 @@
   how it is built, value for MCL, limits and next steps, and a 5-minute demo
   script. It prints to PDF as a handout. Next: practise the demo; run the
   database setup and fill in config.js before the presentation if possible.
+- Sunrise header (Claude): the dark header band on all three pages is now a
+  sunrise sky (cream to peach to coral) with dark warm text, and a sun rising
+  behind the mine scene. It stays the same in dark mode; printing stays plain
+  white. Only style.css changed.
